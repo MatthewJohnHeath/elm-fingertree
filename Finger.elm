@@ -1,13 +1,15 @@
-module Finger exposing
-  (Finger(..),
+module Finger exposing(..)
+  {-(Finger(..),
   map, reduce,
   leftAdd, rightAdd,
   leftRemove, rightRemove,
   leftPeak, rightPeak,
   tryFromList, toList,
   ListSplit, split
-  )
+ -}
+
 import Monoid exposing (Monoid)
+ {- |A container of 1 to 4 elements -}
 type Finger a
   = One a
   | Two a a
@@ -43,24 +45,25 @@ rightAdd ana finger =
   case finger of
     One a1 -> Two a1 ana
     Two a1 a2 -> Three a1 a2 ana
-    Three a1 a2 a3 -> Four a1 a2 a3 ana
+    Three a1 a2 a3 ->
+       Four a1 a2 a3 ana
     Four  a1 a2 a3 a4 -> finger
 
 leftRemove: Finger a -> Finger a
 leftRemove finger=
   case finger of
     One a1 -> finger
-    Two a1 a2 -> One a1
-    Three a1 a2 a3 -> Two a1 a2
-    Four  a1 a2 a3 a4 -> Three a1 a2 a3
+    Two a1 a2 -> One a2
+    Three a1 a2 a3 -> Two a2 a3
+    Four  a1 a2 a3 a4 -> Three a2 a3 a4
 
 rightRemove: Finger a -> Finger a
 rightRemove finger=
   case finger of
     One a1 -> finger
-    Two a1 a2 -> One a2
-    Three a1 a2 a3 -> Two a2 a1
-    Four  a1 a2 a3 a4 -> Three a2 a3 a4
+    Two a1 a2 -> One a1
+    Three a1 a2 a3 -> Two a1 a2
+    Four  a1 a2 a3 a4 -> Three a1 a2 a3
 
 leftPeak:Finger a->a
 leftPeak finger =
@@ -100,7 +103,10 @@ type alias ListSplit a=
 
 startSplit: Finger a -> ListSplit a
 startSplit finger =
-  {left = [], mid = leftPeak finger, right = finger |> leftRemove |> toList}
+  case finger of
+    One a ->{left =[], mid = a, right =[] }
+    _ ->
+      {left = [], mid = leftPeak finger, right = finger |> leftRemove |> toList}
 
 splitList:  (a -> b -> b) -> (b -> Bool) -> b ->ListSplit a ->  Maybe (ListSplit a)
 splitList folder measurement accumulator listsplit =

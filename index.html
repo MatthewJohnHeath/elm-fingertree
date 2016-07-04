@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html><head><meta charset="UTF-8"><title>Annotated</title><style>html,head,body { padding:0; margin:0; }
+<html><head><meta charset="UTF-8"><title>Container</title><style>html,head,body { padding:0; margin:0; }
 body { font-family: calibri, helvetica, arial, sans-serif; }</style><script type="text/javascript">
 (function() {
 'use strict';
@@ -2536,22 +2536,24 @@ var _user$project$Monoid$Monoid = F2(
 var _user$project$Monoid$Normal = function (a) {
 	return {ctor: 'Normal', _0: a};
 };
-var _user$project$Monoid$biggest = F2(
-	function (first, second) {
-		var _p0 = {ctor: '_Tuple2', _0: first, _1: second};
-		if (_p0._0.ctor === 'MinusInfinity') {
-			return _p0._1;
-		} else {
-			if (_p0._1.ctor === 'MinusInfinity') {
-				return _p0._0;
+var _user$project$Monoid$Zero = {ctor: 'Zero'};
+var _user$project$Monoid$appendZero = function (op) {
+	var newOp = F2(
+		function (a1, a2) {
+			var _p0 = {ctor: '_Tuple2', _0: a1, _1: a2};
+			if (_p0._0.ctor === 'Zero') {
+				return _p0._1;
 			} else {
-				return _user$project$Monoid$Normal(
-					A2(_elm_lang$core$Basics$max, _p0._0._0, _p0._1._0));
+				if (_p0._1.ctor === 'Zero') {
+					return _p0._0;
+				} else {
+					return _user$project$Monoid$Normal(
+						A2(op, _p0._0._0, _p0._1._0));
+				}
 			}
-		}
-	});
-var _user$project$Monoid$MinusInfinity = {ctor: 'MinusInfinity'};
-var _user$project$Monoid$maximum = {zero: _user$project$Monoid$MinusInfinity, op: _user$project$Monoid$biggest};
+		});
+	return {zero: _user$project$Monoid$Zero, op: newOp};
+};
 var _user$project$Finger$splitList = F4(
 	function (folder, measurement, accumulator, listsplit) {
 		splitList:
@@ -2740,74 +2742,85 @@ var _user$project$Finger$leftRemove = function (finger) {
 		case 'One':
 			return finger;
 		case 'Two':
-			return _user$project$Finger$One(_p8._0);
+			return _user$project$Finger$One(_p8._1);
 		case 'Three':
-			return A2(_user$project$Finger$Two, _p8._0, _p8._1);
+			return A2(_user$project$Finger$Two, _p8._1, _p8._2);
 		default:
-			return A3(_user$project$Finger$Three, _p8._0, _p8._1, _p8._2);
+			return A3(_user$project$Finger$Three, _p8._1, _p8._2, _p8._3);
 	}
 };
 var _user$project$Finger$startSplit = function (finger) {
-	return {
-		left: _elm_lang$core$Native_List.fromArray(
-			[]),
-		mid: _user$project$Finger$leftPeak(finger),
-		right: _user$project$Finger$toList(
-			_user$project$Finger$leftRemove(finger))
-	};
+	var _p9 = finger;
+	if (_p9.ctor === 'One') {
+		return {
+			left: _elm_lang$core$Native_List.fromArray(
+				[]),
+			mid: _p9._0,
+			right: _elm_lang$core$Native_List.fromArray(
+				[])
+		};
+	} else {
+		return {
+			left: _elm_lang$core$Native_List.fromArray(
+				[]),
+			mid: _user$project$Finger$leftPeak(finger),
+			right: _user$project$Finger$toList(
+				_user$project$Finger$leftRemove(finger))
+		};
+	}
 };
 var _user$project$Finger$split = F3(
 	function (folder, measurement, accumulator) {
-		return function (_p9) {
+		return function (_p10) {
 			return A4(
 				_user$project$Finger$splitList,
 				folder,
 				measurement,
 				accumulator,
-				_user$project$Finger$startSplit(_p9));
+				_user$project$Finger$startSplit(_p10));
 		};
 	});
 var _user$project$Finger$rightRemove = function (finger) {
-	var _p10 = finger;
-	switch (_p10.ctor) {
+	var _p11 = finger;
+	switch (_p11.ctor) {
 		case 'One':
 			return finger;
 		case 'Two':
-			return _user$project$Finger$One(_p10._1);
+			return _user$project$Finger$One(_p11._0);
 		case 'Three':
-			return A2(_user$project$Finger$Two, _p10._1, _p10._0);
+			return A2(_user$project$Finger$Two, _p11._0, _p11._1);
 		default:
-			return A3(_user$project$Finger$Three, _p10._1, _p10._2, _p10._3);
+			return A3(_user$project$Finger$Three, _p11._0, _p11._1, _p11._2);
 	}
 };
 var _user$project$Finger$tryFromList = function (list) {
-	var _p11 = list;
-	_v14_4:
+	var _p12 = list;
+	_v15_4:
 	do {
-		if (_p11.ctor === '::') {
-			if (_p11._1.ctor === '[]') {
+		if (_p12.ctor === '::') {
+			if (_p12._1.ctor === '[]') {
 				return _elm_lang$core$Maybe$Just(
-					_user$project$Finger$One(_p11._0));
+					_user$project$Finger$One(_p12._0));
 			} else {
-				if (_p11._1._1.ctor === '[]') {
+				if (_p12._1._1.ctor === '[]') {
 					return _elm_lang$core$Maybe$Just(
-						A2(_user$project$Finger$Two, _p11._0, _p11._1._0));
+						A2(_user$project$Finger$Two, _p12._0, _p12._1._0));
 				} else {
-					if (_p11._1._1._1.ctor === '[]') {
+					if (_p12._1._1._1.ctor === '[]') {
 						return _elm_lang$core$Maybe$Just(
-							A3(_user$project$Finger$Three, _p11._0, _p11._1._0, _p11._1._1._0));
+							A3(_user$project$Finger$Three, _p12._0, _p12._1._0, _p12._1._1._0));
 					} else {
-						if (_p11._1._1._1._1.ctor === '[]') {
+						if (_p12._1._1._1._1.ctor === '[]') {
 							return _elm_lang$core$Maybe$Just(
-								A4(_user$project$Finger$Four, _p11._0, _p11._1._0, _p11._1._1._0, _p11._1._1._1._0));
+								A4(_user$project$Finger$Four, _p12._0, _p12._1._0, _p12._1._1._0, _p12._1._1._1._0));
 						} else {
-							break _v14_4;
+							break _v15_4;
 						}
 					}
 				}
 			}
 		} else {
-			break _v14_4;
+			break _v15_4;
 		}
 	} while(false);
 	return _elm_lang$core$Maybe$Nothing;
@@ -3081,14 +3094,6 @@ var _user$project$Internal$leftPush = F4(
 				}
 		}
 	});
-var _user$project$Internal$ofList = F3(
-	function (monoid, projection, list) {
-		return A3(
-			_elm_lang$core$List$foldl,
-			A2(_user$project$Internal$leftPush, monoid, projection),
-			_user$project$Internal$empty,
-			list);
-	});
 var _user$project$Internal$leftPop = F2(
 	function (mon, fingerTree) {
 		var _p8 = fingerTree;
@@ -3153,10 +3158,10 @@ var _user$project$Internal$rightPush = F4(
 			case 'Single':
 				return A4(
 					_user$project$Internal$Deep,
-					_user$project$Finger$One(a0),
+					_user$project$Finger$One(_p14._0),
 					_user$project$Internal$Empty,
 					zero,
-					_user$project$Finger$One(_p14._0));
+					_user$project$Finger$One(a0));
 			default:
 				if (_p14._3.ctor === 'Four') {
 					var node = A3(_user$project$Node$Node3, _p14._3._0, _p14._3._1, _p14._3._2);
@@ -3190,6 +3195,14 @@ var _user$project$Internal$rightPush = F4(
 						A2(_user$project$Finger$rightAdd, a0, _p14._3));
 				}
 		}
+	});
+var _user$project$Internal$ofList = F3(
+	function (monoid, projection, list) {
+		return A3(
+			_elm_lang$core$List$foldl,
+			A2(_user$project$Internal$rightPush, monoid, projection),
+			_user$project$Internal$empty,
+			list);
 	});
 var _user$project$Internal$rightPop = F2(
 	function (mon, fingerTree) {
@@ -3248,7 +3261,7 @@ var _user$project$Internal$deepLeft = F5(
 var _user$project$Internal$concatWithMiddle = F5(
 	function (monoid, projection, left, middle, right) {
 		var rPush = A2(_user$project$Internal$rightPush, monoid, projection);
-		var lPush = A2(_user$project$Internal$rightPush, monoid, projection);
+		var lPush = A2(_user$project$Internal$leftPush, monoid, projection);
 		var annotate = function (node) {
 			return {
 				ctor: '_Tuple2',
@@ -3379,7 +3392,11 @@ var _user$project$Internal$split = F5(
 						var _p32 = _p30._0;
 						var _p31 = _p32.middle;
 						var node = _p31._0;
-						var splitNode = A4(_user$project$Node$split, start, folder, measurement, node);
+						var upToNode = A2(
+							monoid.op,
+							leftReduced,
+							red(_p32.left));
+						var splitNode = A4(_user$project$Node$split, upToNode, folder, measurement, node);
 						var splitLeft = A4(
 							deepL,
 							_p36,
@@ -3401,7 +3418,7 @@ var _user$project$Internal$split = F5(
 							var _p34 = _p33._0;
 							return _elm_lang$core$Maybe$Just(
 								{
-									left: A4(deepR, _p34.left, _p37, _p35, _p38),
+									left: A4(deepL, _p36, _p37, _p35, _p34.left),
 									middle: _p34.mid,
 									right: fromList(_p34.right)
 								});
@@ -3414,6 +3431,99 @@ var _user$project$Internal$split = F5(
 				return _elm_lang$core$Maybe$Nothing;
 		}
 	});
+var _user$project$Annotated$annotate = F2(
+	function (aft, asplit) {
+		return {
+			left: _elm_lang$core$Native_Utils.update(
+				aft,
+				{tree: asplit.left}),
+			middle: asplit.middle,
+			right: _elm_lang$core$Native_Utils.update(
+				aft,
+				{tree: asplit.right})
+		};
+	});
+var _user$project$Annotated$split = F2(
+	function (measure, aft) {
+		return A2(
+			_elm_lang$core$Maybe$map,
+			_user$project$Annotated$annotate(aft),
+			A5(_user$project$Internal$split, aft.monoid, aft.projection, measure, aft.monoid.zero, aft.tree));
+	});
+var _user$project$Annotated$get = function (measure) {
+	return function (_p0) {
+		return A2(
+			_elm_lang$core$Maybe$map,
+			function (_) {
+				return _.middle;
+			},
+			A2(_user$project$Annotated$split, measure, _p0));
+	};
+};
+var _user$project$Annotated$before = F2(
+	function (measure, aft) {
+		var _p1 = A2(_user$project$Annotated$split, measure, aft);
+		if (_p1.ctor === 'Just') {
+			return _p1._0.left;
+		} else {
+			return _elm_lang$core$Native_Utils.update(
+				aft,
+				{tree: _user$project$Internal$Empty});
+		}
+	});
+var _user$project$Annotated$after = F2(
+	function (measure, aft) {
+		var _p2 = A2(_user$project$Annotated$split, measure, aft);
+		if (_p2.ctor === 'Just') {
+			return _p2._0.right;
+		} else {
+			return _elm_lang$core$Native_Utils.update(
+				aft,
+				{tree: _user$project$Internal$Empty});
+		}
+	});
+var _user$project$Annotated$concatWithMiddle = F3(
+	function (l, m, r) {
+		return _elm_lang$core$Native_Utils.update(
+			l,
+			{
+				tree: A5(_user$project$Internal$concatWithMiddle, l.monoid, l.projection, l.tree, m, r.tree)
+			});
+	});
+var _user$project$Annotated$set = F2(
+	function (measure, value) {
+		var rebuild = function (asplit) {
+			return A3(
+				_user$project$Annotated$concatWithMiddle,
+				asplit.left,
+				_elm_lang$core$Native_List.fromArray(
+					[value]),
+				asplit.right);
+		};
+		return function (_p3) {
+			return A2(
+				_elm_lang$core$Maybe$map,
+				rebuild,
+				A2(_user$project$Annotated$split, measure, _p3));
+		};
+	});
+var _user$project$Annotated$insert = F2(
+	function (measure, value) {
+		var rebuild = function (asplit) {
+			return A3(
+				_user$project$Annotated$concatWithMiddle,
+				asplit.left,
+				_elm_lang$core$Native_List.fromArray(
+					[value, asplit.middle]),
+				asplit.right);
+		};
+		return function (_p4) {
+			return A2(
+				_elm_lang$core$Maybe$map,
+				rebuild,
+				A2(_user$project$Annotated$split, measure, _p4));
+		};
+	});
 var _user$project$Annotated$concat = F2(
 	function (l, r) {
 		return _elm_lang$core$Native_Utils.update(
@@ -3422,6 +3532,16 @@ var _user$project$Annotated$concat = F2(
 				tree: A4(_user$project$Internal$concat, l.monoid, l.projection, l.tree, r.tree)
 			});
 	});
+var _user$project$Annotated$remove = function (measure) {
+	return function (_p5) {
+		return A2(
+			_elm_lang$core$Maybe$map,
+			function (asplit) {
+				return A2(_user$project$Annotated$concat, asplit.left, asplit.right);
+			},
+			A2(_user$project$Annotated$split, measure, _p5));
+	};
+};
 var _user$project$Annotated$rightPush = F2(
 	function (ana, aft) {
 		return _elm_lang$core$Native_Utils.update(
@@ -3430,6 +3550,18 @@ var _user$project$Annotated$rightPush = F2(
 				tree: A4(_user$project$Internal$rightPush, aft.monoid, aft.projection, ana, aft.tree)
 			});
 	});
+var _user$project$Annotated$upTo = F2(
+	function (measure, aft) {
+		var _p6 = A2(_user$project$Annotated$split, measure, aft);
+		if (_p6.ctor === 'Just') {
+			var _p7 = _p6._0;
+			return A2(_user$project$Annotated$rightPush, _p7.middle, _p7.left);
+		} else {
+			return _elm_lang$core$Native_Utils.update(
+				aft,
+				{tree: _user$project$Internal$Empty});
+		}
+	});
 var _user$project$Annotated$rightPop = function (aft) {
 	return _elm_lang$core$Native_Utils.update(
 		aft,
@@ -3437,11 +3569,11 @@ var _user$project$Annotated$rightPop = function (aft) {
 			tree: A2(_user$project$Internal$rightPop, aft.monoid, aft.tree)
 		});
 };
-var _user$project$Annotated$rightPeak = function (_p0) {
+var _user$project$Annotated$rightPeek = function (_p8) {
 	return _user$project$Internal$rightPeak(
 		function (_) {
 			return _.tree;
-		}(_p0));
+		}(_p8));
 };
 var _user$project$Annotated$leftPush = F2(
 	function (ana, aft) {
@@ -3451,6 +3583,18 @@ var _user$project$Annotated$leftPush = F2(
 				tree: A4(_user$project$Internal$leftPush, aft.monoid, aft.projection, ana, aft.tree)
 			});
 	});
+var _user$project$Annotated$from = F2(
+	function (measure, aft) {
+		var _p9 = A2(_user$project$Annotated$split, measure, aft);
+		if (_p9.ctor === 'Just') {
+			var _p10 = _p9._0;
+			return A2(_user$project$Annotated$leftPush, _p10.middle, _p10.right);
+		} else {
+			return _elm_lang$core$Native_Utils.update(
+				aft,
+				{tree: _user$project$Internal$Empty});
+		}
+	});
 var _user$project$Annotated$leftPop = function (aft) {
 	return _elm_lang$core$Native_Utils.update(
 		aft,
@@ -3458,11 +3602,11 @@ var _user$project$Annotated$leftPop = function (aft) {
 			tree: A2(_user$project$Internal$leftPop, aft.monoid, aft.tree)
 		});
 };
-var _user$project$Annotated$leftPeak = function (_p1) {
+var _user$project$Annotated$leftPeek = function (_p11) {
 	return _user$project$Internal$leftPeak(
 		function (_) {
 			return _.tree;
-		}(_p1));
+		}(_p11));
 };
 var _user$project$Annotated$reduce = function (aft) {
 	return A3(_user$project$Internal$reduce, aft.monoid, aft.projection, aft.tree);
@@ -3475,9 +3619,102 @@ var _user$project$Annotated$empty = F2(
 	function (monoid, projection) {
 		return A3(_user$project$Annotated$AnnotatedFingerTree, monoid, projection, _user$project$Internal$empty);
 	});
+var _user$project$Annotated$Split = F3(
+	function (a, b, c) {
+		return {left: a, middle: b, right: c};
+	});
+var _user$project$Container$insert = function (_p0) {
+	return _user$project$Annotated$insert(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p0));
+};
+var _user$project$Container$remove = function (_p1) {
+	return _user$project$Annotated$remove(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p1));
+};
+var _user$project$Container$set = function (_p2) {
+	return _user$project$Annotated$set(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p2));
+};
+var _user$project$Container$get = function (_p3) {
+	return _user$project$Annotated$get(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p3));
+};
+var _user$project$Container$size = _user$project$Annotated$reduce;
+var _user$project$Container$slice = F3(
+	function (start, end, con) {
+		var length = _user$project$Container$size(con);
+		var index = function (n) {
+			index:
+			while (true) {
+				if (_elm_lang$core$Native_Utils.cmp(n, 0 - length) < 0) {
+					var _v0 = 0;
+					n = _v0;
+					continue index;
+				} else {
+					if (_elm_lang$core$Native_Utils.cmp(n, 0) < 0) {
+						var _v1 = length + n;
+						n = _v1;
+						continue index;
+					} else {
+						if (_elm_lang$core$Native_Utils.cmp(n, length) > -1) {
+							return length - 1;
+						} else {
+							return n;
+						}
+					}
+				}
+			}
+		};
+		return A2(
+			_user$project$Annotated$before,
+			function (_p4) {
+				return A2(
+					F2(
+						function (x, y) {
+							return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+						}),
+					end - start,
+					index(_p4));
+			},
+			A2(
+				_user$project$Annotated$from,
+				function (_p5) {
+					return A2(
+						F2(
+							function (x, y) {
+								return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+							}),
+						start,
+						index(_p5));
+				},
+				con));
+	});
+var _user$project$Container$peekBack = _user$project$Annotated$rightPeek;
+var _user$project$Container$popBack = _user$project$Annotated$rightPop;
+var _user$project$Container$pushBack = _user$project$Annotated$rightPush;
+var _user$project$Container$peekFront = _user$project$Annotated$leftPeek;
+var _user$project$Container$popFront = _user$project$Annotated$leftPop;
+var _user$project$Container$pushFront = _user$project$Annotated$leftPush;
+var _user$project$Container$empty = A2(
+	_user$project$Annotated$empty,
+	_user$project$Monoid$int,
+	_elm_lang$core$Basics$always(1));
+var _user$project$Container$fromList = A2(_elm_lang$core$List$foldl, _user$project$Container$pushBack, _user$project$Container$empty);
 var Elm = {};
-Elm['Annotated'] = Elm['Annotated'] || {};
-_elm_lang$core$Native_Platform.addPublicModule(Elm['Annotated'], 'Annotated', typeof _user$project$Annotated$main === 'undefined' ? null : _user$project$Annotated$main);
+Elm['Container'] = Elm['Container'] || {};
+_elm_lang$core$Native_Platform.addPublicModule(Elm['Container'], 'Container', typeof _user$project$Container$main === 'undefined' ? null : _user$project$Container$main);
 
 if (typeof define === "function" && define['amd'])
 {
@@ -3508,4 +3745,4 @@ for (var publicModule in Elm)
 }
 
 }).call(this);
-</script></head><body><script type="text/javascript">Elm.Annotated.fullscreen()</script></body></html>
+</script></head><body><script type="text/javascript">Elm.Container.fullscreen()</script></body></html>

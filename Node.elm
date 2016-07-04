@@ -1,8 +1,8 @@
-module Node exposing
-  (Node,Node(Node2), Node(Node3),
+module Node exposing(..)
+{-  (Node,Node(Node2), Node(Node3),
   map, reduce,
   toFinger,
-  split)
+  split)-}
 import Finger
 
 type Node a
@@ -26,7 +26,6 @@ toFinger node =
   case node of
     Node2 a1 a2 -> Finger.Two a1 a2
     Node3 a1 a2 a3 -> Finger.Three a1 a2 a3
-
 
 startSplit: Node a-> Finger.ListSplit a
 startSplit node =
