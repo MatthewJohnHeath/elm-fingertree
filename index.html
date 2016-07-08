@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html><head><meta charset="UTF-8"><title>Container</title><style>html,head,body { padding:0; margin:0; }
+<html><head><meta charset="UTF-8"><title>PriorityQueue</title><style>html,head,body { padding:0; margin:0; }
 body { font-family: calibri, helvetica, arial, sans-serif; }</style><script type="text/javascript">
 (function() {
 'use strict';
@@ -816,6 +816,37 @@ var _elm_lang$core$Basics$LT = {ctor: 'LT'};
 var _elm_lang$core$Basics$Never = function (a) {
 	return {ctor: 'Never', _0: a};
 };
+//import Native.Utils //
+
+var _elm_lang$core$Native_Debug = function() {
+
+function log(tag, value)
+{
+	var msg = tag + ': ' + _elm_lang$core$Native_Utils.toString(value);
+	var process = process || {};
+	if (process.stdout)
+	{
+		process.stdout.write(msg);
+	}
+	else
+	{
+		console.log(msg);
+	}
+	return value;
+}
+
+function crash(message)
+{
+	throw new Error(message);
+}
+
+return {
+	crash: crash,
+	log: F2(log)
+};
+
+}();var _elm_lang$core$Debug$crash = _elm_lang$core$Native_Debug.crash;
+var _elm_lang$core$Debug$log = _elm_lang$core$Native_Debug.log;
 var _elm_lang$core$Maybe$withDefault = F2(
 	function ($default, maybe) {
 		var _p0 = maybe;
@@ -1458,284 +1489,148 @@ var _elm_lang$core$List$repeat = F2(
 			n,
 			value);
 	});
-//import Native.Utils //
-
-var _elm_lang$core$Native_Scheduler = function() {
-
-var MAX_STEPS = 10000;
-
-
-// TASKS
-
-function succeed(value)
-{
-	return {
-		ctor: '_Task_succeed',
-		value: value
-	};
-}
-
-function fail(error)
-{
-	return {
-		ctor: '_Task_fail',
-		value: error
-	};
-}
-
-function nativeBinding(callback)
-{
-	return {
-		ctor: '_Task_nativeBinding',
-		callback: callback,
-		cancel: null
-	};
-}
-
-function andThen(task, callback)
-{
-	return {
-		ctor: '_Task_andThen',
-		task: task,
-		callback: callback
-	};
-}
-
-function onError(task, callback)
-{
-	return {
-		ctor: '_Task_onError',
-		task: task,
-		callback: callback
-	};
-}
-
-function receive(callback)
-{
-	return {
-		ctor: '_Task_receive',
-		callback: callback
-	};
-}
-
-
-// PROCESSES
-
-function rawSpawn(task)
-{
-	var process = {
-		ctor: '_Process',
-		id: _elm_lang$core$Native_Utils.guid(),
-		root: task,
-		stack: null,
-		mailbox: []
-	};
-
-	enqueue(process);
-
-	return process;
-}
-
-function spawn(task)
-{
-	return nativeBinding(function(callback) {
-		var process = rawSpawn(task);
-		callback(succeed(process));
-	});
-}
-
-function rawSend(process, msg)
-{
-	process.mailbox.push(msg);
-	enqueue(process);
-}
-
-function send(process, msg)
-{
-	return nativeBinding(function(callback) {
-		rawSend(process, msg);
-		callback(succeed(_elm_lang$core$Native_Utils.Tuple0));
-	});
-}
-
-function kill(process)
-{
-	return nativeBinding(function(callback) {
-		var root = process.root;
-		if (root.ctor === '_Task_nativeBinding' && root.cancel)
-		{
-			root.cancel();
-		}
-
-		process.root = null;
-
-		callback(succeed(_elm_lang$core$Native_Utils.Tuple0));
-	});
-}
-
-function sleep(time)
-{
-	return nativeBinding(function(callback) {
-		var id = setTimeout(function() {
-			callback(succeed(_elm_lang$core$Native_Utils.Tuple0));
-		}, time);
-
-		return function() { clearTimeout(id); };
-	});
-}
-
-
-// STEP PROCESSES
-
-function step(numSteps, process)
-{
-	while (numSteps < MAX_STEPS)
-	{
-		var ctor = process.root.ctor;
-
-		if (ctor === '_Task_succeed')
-		{
-			while (process.stack && process.stack.ctor === '_Task_onError')
-			{
-				process.stack = process.stack.rest;
-			}
-			if (process.stack === null)
-			{
-				break;
-			}
-			process.root = process.stack.callback(process.root.value);
-			process.stack = process.stack.rest;
-			++numSteps;
-			continue;
-		}
-
-		if (ctor === '_Task_fail')
-		{
-			while (process.stack && process.stack.ctor === '_Task_andThen')
-			{
-				process.stack = process.stack.rest;
-			}
-			if (process.stack === null)
-			{
-				break;
-			}
-			process.root = process.stack.callback(process.root.value);
-			process.stack = process.stack.rest;
-			++numSteps;
-			continue;
-		}
-
-		if (ctor === '_Task_andThen')
-		{
-			process.stack = {
-				ctor: '_Task_andThen',
-				callback: process.root.callback,
-				rest: process.stack
-			};
-			process.root = process.root.task;
-			++numSteps;
-			continue;
-		}
-
-		if (ctor === '_Task_onError')
-		{
-			process.stack = {
-				ctor: '_Task_onError',
-				callback: process.root.callback,
-				rest: process.stack
-			};
-			process.root = process.root.task;
-			++numSteps;
-			continue;
-		}
-
-		if (ctor === '_Task_nativeBinding')
-		{
-			process.root.cancel = process.root.callback(function(newRoot) {
-				process.root = newRoot;
-				enqueue(process);
-			});
-
-			break;
-		}
-
-		if (ctor === '_Task_receive')
-		{
-			var mailbox = process.mailbox;
-			if (mailbox.length === 0)
-			{
-				break;
-			}
-
-			process.root = process.root.callback(mailbox.shift());
-			++numSteps;
-			continue;
-		}
-
-		throw new Error(ctor);
+var _elm_lang$core$Result$toMaybe = function (result) {
+	var _p0 = result;
+	if (_p0.ctor === 'Ok') {
+		return _elm_lang$core$Maybe$Just(_p0._0);
+	} else {
+		return _elm_lang$core$Maybe$Nothing;
 	}
-
-	if (numSteps < MAX_STEPS)
-	{
-		return numSteps + 1;
-	}
-	enqueue(process);
-
-	return numSteps;
-}
-
-
-// WORK QUEUE
-
-var working = false;
-var workQueue = [];
-
-function enqueue(process)
-{
-	workQueue.push(process);
-
-	if (!working)
-	{
-		setTimeout(work, 0);
-		working = true;
-	}
-}
-
-function work()
-{
-	var numSteps = 0;
-	var process;
-	while (numSteps < MAX_STEPS && (process = workQueue.shift()))
-	{
-		numSteps = step(numSteps, process);
-	}
-	if (!process)
-	{
-		working = false;
-		return;
-	}
-	setTimeout(work, 0);
-}
-
-
-return {
-	succeed: succeed,
-	fail: fail,
-	nativeBinding: nativeBinding,
-	andThen: F2(andThen),
-	onError: F2(onError),
-	receive: receive,
-
-	spawn: spawn,
-	kill: kill,
-	sleep: sleep,
-	send: F2(send),
-
-	rawSpawn: rawSpawn,
-	rawSend: rawSend
 };
-
-}();//import //
+var _elm_lang$core$Result$withDefault = F2(
+	function (def, result) {
+		var _p1 = result;
+		if (_p1.ctor === 'Ok') {
+			return _p1._0;
+		} else {
+			return def;
+		}
+	});
+var _elm_lang$core$Result$Err = function (a) {
+	return {ctor: 'Err', _0: a};
+};
+var _elm_lang$core$Result$andThen = F2(
+	function (result, callback) {
+		var _p2 = result;
+		if (_p2.ctor === 'Ok') {
+			return callback(_p2._0);
+		} else {
+			return _elm_lang$core$Result$Err(_p2._0);
+		}
+	});
+var _elm_lang$core$Result$Ok = function (a) {
+	return {ctor: 'Ok', _0: a};
+};
+var _elm_lang$core$Result$map = F2(
+	function (func, ra) {
+		var _p3 = ra;
+		if (_p3.ctor === 'Ok') {
+			return _elm_lang$core$Result$Ok(
+				func(_p3._0));
+		} else {
+			return _elm_lang$core$Result$Err(_p3._0);
+		}
+	});
+var _elm_lang$core$Result$map2 = F3(
+	function (func, ra, rb) {
+		var _p4 = {ctor: '_Tuple2', _0: ra, _1: rb};
+		if (_p4._0.ctor === 'Ok') {
+			if (_p4._1.ctor === 'Ok') {
+				return _elm_lang$core$Result$Ok(
+					A2(func, _p4._0._0, _p4._1._0));
+			} else {
+				return _elm_lang$core$Result$Err(_p4._1._0);
+			}
+		} else {
+			return _elm_lang$core$Result$Err(_p4._0._0);
+		}
+	});
+var _elm_lang$core$Result$map3 = F4(
+	function (func, ra, rb, rc) {
+		var _p5 = {ctor: '_Tuple3', _0: ra, _1: rb, _2: rc};
+		if (_p5._0.ctor === 'Ok') {
+			if (_p5._1.ctor === 'Ok') {
+				if (_p5._2.ctor === 'Ok') {
+					return _elm_lang$core$Result$Ok(
+						A3(func, _p5._0._0, _p5._1._0, _p5._2._0));
+				} else {
+					return _elm_lang$core$Result$Err(_p5._2._0);
+				}
+			} else {
+				return _elm_lang$core$Result$Err(_p5._1._0);
+			}
+		} else {
+			return _elm_lang$core$Result$Err(_p5._0._0);
+		}
+	});
+var _elm_lang$core$Result$map4 = F5(
+	function (func, ra, rb, rc, rd) {
+		var _p6 = {ctor: '_Tuple4', _0: ra, _1: rb, _2: rc, _3: rd};
+		if (_p6._0.ctor === 'Ok') {
+			if (_p6._1.ctor === 'Ok') {
+				if (_p6._2.ctor === 'Ok') {
+					if (_p6._3.ctor === 'Ok') {
+						return _elm_lang$core$Result$Ok(
+							A4(func, _p6._0._0, _p6._1._0, _p6._2._0, _p6._3._0));
+					} else {
+						return _elm_lang$core$Result$Err(_p6._3._0);
+					}
+				} else {
+					return _elm_lang$core$Result$Err(_p6._2._0);
+				}
+			} else {
+				return _elm_lang$core$Result$Err(_p6._1._0);
+			}
+		} else {
+			return _elm_lang$core$Result$Err(_p6._0._0);
+		}
+	});
+var _elm_lang$core$Result$map5 = F6(
+	function (func, ra, rb, rc, rd, re) {
+		var _p7 = {ctor: '_Tuple5', _0: ra, _1: rb, _2: rc, _3: rd, _4: re};
+		if (_p7._0.ctor === 'Ok') {
+			if (_p7._1.ctor === 'Ok') {
+				if (_p7._2.ctor === 'Ok') {
+					if (_p7._3.ctor === 'Ok') {
+						if (_p7._4.ctor === 'Ok') {
+							return _elm_lang$core$Result$Ok(
+								A5(func, _p7._0._0, _p7._1._0, _p7._2._0, _p7._3._0, _p7._4._0));
+						} else {
+							return _elm_lang$core$Result$Err(_p7._4._0);
+						}
+					} else {
+						return _elm_lang$core$Result$Err(_p7._3._0);
+					}
+				} else {
+					return _elm_lang$core$Result$Err(_p7._2._0);
+				}
+			} else {
+				return _elm_lang$core$Result$Err(_p7._1._0);
+			}
+		} else {
+			return _elm_lang$core$Result$Err(_p7._0._0);
+		}
+	});
+var _elm_lang$core$Result$formatError = F2(
+	function (f, result) {
+		var _p8 = result;
+		if (_p8.ctor === 'Ok') {
+			return _elm_lang$core$Result$Ok(_p8._0);
+		} else {
+			return _elm_lang$core$Result$Err(
+				f(_p8._0));
+		}
+	});
+var _elm_lang$core$Result$fromMaybe = F2(
+	function (err, maybe) {
+		var _p9 = maybe;
+		if (_p9.ctor === 'Just') {
+			return _elm_lang$core$Result$Ok(_p9._0);
+		} else {
+			return _elm_lang$core$Result$Err(err);
+		}
+	});
+//import //
 
 var _elm_lang$core$Native_Platform = function() {
 
@@ -2311,6 +2206,283 @@ return {
 	map: F2(map)
 };
 
+}();//import Native.Utils //
+
+var _elm_lang$core$Native_Scheduler = function() {
+
+var MAX_STEPS = 10000;
+
+
+// TASKS
+
+function succeed(value)
+{
+	return {
+		ctor: '_Task_succeed',
+		value: value
+	};
+}
+
+function fail(error)
+{
+	return {
+		ctor: '_Task_fail',
+		value: error
+	};
+}
+
+function nativeBinding(callback)
+{
+	return {
+		ctor: '_Task_nativeBinding',
+		callback: callback,
+		cancel: null
+	};
+}
+
+function andThen(task, callback)
+{
+	return {
+		ctor: '_Task_andThen',
+		task: task,
+		callback: callback
+	};
+}
+
+function onError(task, callback)
+{
+	return {
+		ctor: '_Task_onError',
+		task: task,
+		callback: callback
+	};
+}
+
+function receive(callback)
+{
+	return {
+		ctor: '_Task_receive',
+		callback: callback
+	};
+}
+
+
+// PROCESSES
+
+function rawSpawn(task)
+{
+	var process = {
+		ctor: '_Process',
+		id: _elm_lang$core$Native_Utils.guid(),
+		root: task,
+		stack: null,
+		mailbox: []
+	};
+
+	enqueue(process);
+
+	return process;
+}
+
+function spawn(task)
+{
+	return nativeBinding(function(callback) {
+		var process = rawSpawn(task);
+		callback(succeed(process));
+	});
+}
+
+function rawSend(process, msg)
+{
+	process.mailbox.push(msg);
+	enqueue(process);
+}
+
+function send(process, msg)
+{
+	return nativeBinding(function(callback) {
+		rawSend(process, msg);
+		callback(succeed(_elm_lang$core$Native_Utils.Tuple0));
+	});
+}
+
+function kill(process)
+{
+	return nativeBinding(function(callback) {
+		var root = process.root;
+		if (root.ctor === '_Task_nativeBinding' && root.cancel)
+		{
+			root.cancel();
+		}
+
+		process.root = null;
+
+		callback(succeed(_elm_lang$core$Native_Utils.Tuple0));
+	});
+}
+
+function sleep(time)
+{
+	return nativeBinding(function(callback) {
+		var id = setTimeout(function() {
+			callback(succeed(_elm_lang$core$Native_Utils.Tuple0));
+		}, time);
+
+		return function() { clearTimeout(id); };
+	});
+}
+
+
+// STEP PROCESSES
+
+function step(numSteps, process)
+{
+	while (numSteps < MAX_STEPS)
+	{
+		var ctor = process.root.ctor;
+
+		if (ctor === '_Task_succeed')
+		{
+			while (process.stack && process.stack.ctor === '_Task_onError')
+			{
+				process.stack = process.stack.rest;
+			}
+			if (process.stack === null)
+			{
+				break;
+			}
+			process.root = process.stack.callback(process.root.value);
+			process.stack = process.stack.rest;
+			++numSteps;
+			continue;
+		}
+
+		if (ctor === '_Task_fail')
+		{
+			while (process.stack && process.stack.ctor === '_Task_andThen')
+			{
+				process.stack = process.stack.rest;
+			}
+			if (process.stack === null)
+			{
+				break;
+			}
+			process.root = process.stack.callback(process.root.value);
+			process.stack = process.stack.rest;
+			++numSteps;
+			continue;
+		}
+
+		if (ctor === '_Task_andThen')
+		{
+			process.stack = {
+				ctor: '_Task_andThen',
+				callback: process.root.callback,
+				rest: process.stack
+			};
+			process.root = process.root.task;
+			++numSteps;
+			continue;
+		}
+
+		if (ctor === '_Task_onError')
+		{
+			process.stack = {
+				ctor: '_Task_onError',
+				callback: process.root.callback,
+				rest: process.stack
+			};
+			process.root = process.root.task;
+			++numSteps;
+			continue;
+		}
+
+		if (ctor === '_Task_nativeBinding')
+		{
+			process.root.cancel = process.root.callback(function(newRoot) {
+				process.root = newRoot;
+				enqueue(process);
+			});
+
+			break;
+		}
+
+		if (ctor === '_Task_receive')
+		{
+			var mailbox = process.mailbox;
+			if (mailbox.length === 0)
+			{
+				break;
+			}
+
+			process.root = process.root.callback(mailbox.shift());
+			++numSteps;
+			continue;
+		}
+
+		throw new Error(ctor);
+	}
+
+	if (numSteps < MAX_STEPS)
+	{
+		return numSteps + 1;
+	}
+	enqueue(process);
+
+	return numSteps;
+}
+
+
+// WORK QUEUE
+
+var working = false;
+var workQueue = [];
+
+function enqueue(process)
+{
+	workQueue.push(process);
+
+	if (!working)
+	{
+		setTimeout(work, 0);
+		working = true;
+	}
+}
+
+function work()
+{
+	var numSteps = 0;
+	var process;
+	while (numSteps < MAX_STEPS && (process = workQueue.shift()))
+	{
+		numSteps = step(numSteps, process);
+	}
+	if (!process)
+	{
+		working = false;
+		return;
+	}
+	setTimeout(work, 0);
+}
+
+
+return {
+	succeed: succeed,
+	fail: fail,
+	nativeBinding: nativeBinding,
+	andThen: F2(andThen),
+	onError: F2(onError),
+	receive: receive,
+
+	spawn: spawn,
+	kill: kill,
+	sleep: sleep,
+	send: F2(send),
+
+	rawSpawn: rawSpawn,
+	rawSend: rawSend
+};
+
 }();var _elm_lang$core$Platform$hack = _elm_lang$core$Native_Scheduler.succeed;
 var _elm_lang$core$Platform$sendToSelf = _elm_lang$core$Native_Platform.sendToSelf;
 var _elm_lang$core$Platform$sendToApp = _elm_lang$core$Native_Platform.sendToApp;
@@ -2333,211 +2505,39 @@ _elm_lang$core$Platform_Cmd_ops['!'] = F2(
 	});
 var _elm_lang$core$Platform_Cmd$map = _elm_lang$core$Native_Platform.map;
 var _elm_lang$core$Platform_Cmd$Cmd = {ctor: 'Cmd'};
-var _elm_lang$core$Result$toMaybe = function (result) {
-	var _p0 = result;
-	if (_p0.ctor === 'Ok') {
-		return _elm_lang$core$Maybe$Just(_p0._0);
-	} else {
-		return _elm_lang$core$Maybe$Nothing;
-	}
-};
-var _elm_lang$core$Result$withDefault = F2(
-	function (def, result) {
-		var _p1 = result;
-		if (_p1.ctor === 'Ok') {
-			return _p1._0;
-		} else {
-			return def;
-		}
-	});
-var _elm_lang$core$Result$Err = function (a) {
-	return {ctor: 'Err', _0: a};
-};
-var _elm_lang$core$Result$andThen = F2(
-	function (result, callback) {
-		var _p2 = result;
-		if (_p2.ctor === 'Ok') {
-			return callback(_p2._0);
-		} else {
-			return _elm_lang$core$Result$Err(_p2._0);
-		}
-	});
-var _elm_lang$core$Result$Ok = function (a) {
-	return {ctor: 'Ok', _0: a};
-};
-var _elm_lang$core$Result$map = F2(
-	function (func, ra) {
-		var _p3 = ra;
-		if (_p3.ctor === 'Ok') {
-			return _elm_lang$core$Result$Ok(
-				func(_p3._0));
-		} else {
-			return _elm_lang$core$Result$Err(_p3._0);
-		}
-	});
-var _elm_lang$core$Result$map2 = F3(
-	function (func, ra, rb) {
-		var _p4 = {ctor: '_Tuple2', _0: ra, _1: rb};
-		if (_p4._0.ctor === 'Ok') {
-			if (_p4._1.ctor === 'Ok') {
-				return _elm_lang$core$Result$Ok(
-					A2(func, _p4._0._0, _p4._1._0));
-			} else {
-				return _elm_lang$core$Result$Err(_p4._1._0);
-			}
-		} else {
-			return _elm_lang$core$Result$Err(_p4._0._0);
-		}
-	});
-var _elm_lang$core$Result$map3 = F4(
-	function (func, ra, rb, rc) {
-		var _p5 = {ctor: '_Tuple3', _0: ra, _1: rb, _2: rc};
-		if (_p5._0.ctor === 'Ok') {
-			if (_p5._1.ctor === 'Ok') {
-				if (_p5._2.ctor === 'Ok') {
-					return _elm_lang$core$Result$Ok(
-						A3(func, _p5._0._0, _p5._1._0, _p5._2._0));
-				} else {
-					return _elm_lang$core$Result$Err(_p5._2._0);
-				}
-			} else {
-				return _elm_lang$core$Result$Err(_p5._1._0);
-			}
-		} else {
-			return _elm_lang$core$Result$Err(_p5._0._0);
-		}
-	});
-var _elm_lang$core$Result$map4 = F5(
-	function (func, ra, rb, rc, rd) {
-		var _p6 = {ctor: '_Tuple4', _0: ra, _1: rb, _2: rc, _3: rd};
-		if (_p6._0.ctor === 'Ok') {
-			if (_p6._1.ctor === 'Ok') {
-				if (_p6._2.ctor === 'Ok') {
-					if (_p6._3.ctor === 'Ok') {
-						return _elm_lang$core$Result$Ok(
-							A4(func, _p6._0._0, _p6._1._0, _p6._2._0, _p6._3._0));
-					} else {
-						return _elm_lang$core$Result$Err(_p6._3._0);
-					}
-				} else {
-					return _elm_lang$core$Result$Err(_p6._2._0);
-				}
-			} else {
-				return _elm_lang$core$Result$Err(_p6._1._0);
-			}
-		} else {
-			return _elm_lang$core$Result$Err(_p6._0._0);
-		}
-	});
-var _elm_lang$core$Result$map5 = F6(
-	function (func, ra, rb, rc, rd, re) {
-		var _p7 = {ctor: '_Tuple5', _0: ra, _1: rb, _2: rc, _3: rd, _4: re};
-		if (_p7._0.ctor === 'Ok') {
-			if (_p7._1.ctor === 'Ok') {
-				if (_p7._2.ctor === 'Ok') {
-					if (_p7._3.ctor === 'Ok') {
-						if (_p7._4.ctor === 'Ok') {
-							return _elm_lang$core$Result$Ok(
-								A5(func, _p7._0._0, _p7._1._0, _p7._2._0, _p7._3._0, _p7._4._0));
-						} else {
-							return _elm_lang$core$Result$Err(_p7._4._0);
-						}
-					} else {
-						return _elm_lang$core$Result$Err(_p7._3._0);
-					}
-				} else {
-					return _elm_lang$core$Result$Err(_p7._2._0);
-				}
-			} else {
-				return _elm_lang$core$Result$Err(_p7._1._0);
-			}
-		} else {
-			return _elm_lang$core$Result$Err(_p7._0._0);
-		}
-	});
-var _elm_lang$core$Result$formatError = F2(
-	function (f, result) {
-		var _p8 = result;
-		if (_p8.ctor === 'Ok') {
-			return _elm_lang$core$Result$Ok(_p8._0);
-		} else {
-			return _elm_lang$core$Result$Err(
-				f(_p8._0));
-		}
-	});
-var _elm_lang$core$Result$fromMaybe = F2(
-	function (err, maybe) {
-		var _p9 = maybe;
-		if (_p9.ctor === 'Just') {
-			return _elm_lang$core$Result$Ok(_p9._0);
-		} else {
-			return _elm_lang$core$Result$Err(err);
-		}
-	});
-//import Native.Utils //
-
-var _elm_lang$core$Native_Debug = function() {
-
-function log(tag, value)
-{
-	var msg = tag + ': ' + _elm_lang$core$Native_Utils.toString(value);
-	var process = process || {};
-	if (process.stdout)
-	{
-		process.stdout.write(msg);
-	}
-	else
-	{
-		console.log(msg);
-	}
-	return value;
-}
-
-function crash(message)
-{
-	throw new Error(message);
-}
-
-return {
-	crash: crash,
-	log: F2(log)
-};
-
-}();var _elm_lang$core$Platform_Sub$batch = _elm_lang$core$Native_Platform.batch;
+var _elm_lang$core$Platform_Sub$batch = _elm_lang$core$Native_Platform.batch;
 var _elm_lang$core$Platform_Sub$none = _elm_lang$core$Platform_Sub$batch(
 	_elm_lang$core$Native_List.fromArray(
 		[]));
 var _elm_lang$core$Platform_Sub$map = _elm_lang$core$Native_Platform.map;
 var _elm_lang$core$Platform_Sub$Sub = {ctor: 'Sub'};
-var _elm_lang$core$Debug$crash = _elm_lang$core$Native_Debug.crash;
-var _elm_lang$core$Debug$log = _elm_lang$core$Native_Debug.log;
-var _user$project$Monoid$float = {
+var _MatthewJohnHeath$elm_fingertree$Monoid$float = {
 	zero: 0.0,
 	op: F2(
 		function (x, y) {
 			return x + y;
 		})
 };
-var _user$project$Monoid$int = {
+var _MatthewJohnHeath$elm_fingertree$Monoid$int = {
 	zero: 0,
 	op: F2(
 		function (x, y) {
 			return x + y;
 		})
 };
-var _user$project$Monoid$apply = F3(
+var _MatthewJohnHeath$elm_fingertree$Monoid$apply = F3(
 	function (mon, a1, a2) {
 		return A2(mon.op, a1, a2);
 	});
-var _user$project$Monoid$Monoid = F2(
+var _MatthewJohnHeath$elm_fingertree$Monoid$Monoid = F2(
 	function (a, b) {
 		return {zero: a, op: b};
 	});
-var _user$project$Monoid$Normal = function (a) {
+var _MatthewJohnHeath$elm_fingertree$Monoid$Normal = function (a) {
 	return {ctor: 'Normal', _0: a};
 };
-var _user$project$Monoid$Zero = {ctor: 'Zero'};
-var _user$project$Monoid$appendZero = function (op) {
+var _MatthewJohnHeath$elm_fingertree$Monoid$Zero = {ctor: 'Zero'};
+var _MatthewJohnHeath$elm_fingertree$Monoid$appendZero = function (op) {
 	var newOp = F2(
 		function (a1, a2) {
 			var _p0 = {ctor: '_Tuple2', _0: a1, _1: a2};
@@ -2547,14 +2547,14 @@ var _user$project$Monoid$appendZero = function (op) {
 				if (_p0._1.ctor === 'Zero') {
 					return _p0._0;
 				} else {
-					return _user$project$Monoid$Normal(
+					return _MatthewJohnHeath$elm_fingertree$Monoid$Normal(
 						A2(op, _p0._0._0, _p0._1._0));
 				}
 			}
 		});
-	return {zero: _user$project$Monoid$Zero, op: newOp};
+	return {zero: _MatthewJohnHeath$elm_fingertree$Monoid$Zero, op: newOp};
 };
-var _user$project$Finger$splitList = F4(
+var _MatthewJohnHeath$elm_fingertree$Finger$splitList = F4(
 	function (folder, measurement, accumulator, listsplit) {
 		splitList:
 		while (true) {
@@ -2587,7 +2587,7 @@ var _user$project$Finger$splitList = F4(
 			}
 		}
 	});
-var _user$project$Finger$toList = function (finger) {
+var _MatthewJohnHeath$elm_fingertree$Finger$toList = function (finger) {
 	var _p1 = finger;
 	switch (_p1.ctor) {
 		case 'One':
@@ -2604,7 +2604,7 @@ var _user$project$Finger$toList = function (finger) {
 				[_p1._0, _p1._1, _p1._2, _p1._3]);
 	}
 };
-var _user$project$Finger$rightPeak = function (finger) {
+var _MatthewJohnHeath$elm_fingertree$Finger$rightPeak = function (finger) {
 	var _p2 = finger;
 	switch (_p2.ctor) {
 		case 'One':
@@ -2617,7 +2617,7 @@ var _user$project$Finger$rightPeak = function (finger) {
 			return _p2._3;
 	}
 };
-var _user$project$Finger$leftPeak = function (finger) {
+var _MatthewJohnHeath$elm_fingertree$Finger$leftPeak = function (finger) {
 	var _p3 = finger;
 	switch (_p3.ctor) {
 		case 'One':
@@ -2630,7 +2630,7 @@ var _user$project$Finger$leftPeak = function (finger) {
 			return _p3._0;
 	}
 };
-var _user$project$Finger$reduce = F3(
+var _MatthewJohnHeath$elm_fingertree$Finger$reduce = F3(
 	function (f, zero, finger) {
 		var _p4 = finger;
 		switch (_p4.ctor) {
@@ -2662,94 +2662,94 @@ var _user$project$Finger$reduce = F3(
 							A2(f, _p4._0, zero))));
 		}
 	});
-var _user$project$Finger$ListSplit = F3(
+var _MatthewJohnHeath$elm_fingertree$Finger$ListSplit = F3(
 	function (a, b, c) {
 		return {left: a, mid: b, right: c};
 	});
-var _user$project$Finger$Four = F4(
+var _MatthewJohnHeath$elm_fingertree$Finger$Four = F4(
 	function (a, b, c, d) {
 		return {ctor: 'Four', _0: a, _1: b, _2: c, _3: d};
 	});
-var _user$project$Finger$Three = F3(
+var _MatthewJohnHeath$elm_fingertree$Finger$Three = F3(
 	function (a, b, c) {
 		return {ctor: 'Three', _0: a, _1: b, _2: c};
 	});
-var _user$project$Finger$Two = F2(
+var _MatthewJohnHeath$elm_fingertree$Finger$Two = F2(
 	function (a, b) {
 		return {ctor: 'Two', _0: a, _1: b};
 	});
-var _user$project$Finger$leftAdd = F2(
+var _MatthewJohnHeath$elm_fingertree$Finger$leftAdd = F2(
 	function (ana, finger) {
 		var _p5 = finger;
 		switch (_p5.ctor) {
 			case 'One':
-				return A2(_user$project$Finger$Two, ana, _p5._0);
+				return A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, ana, _p5._0);
 			case 'Two':
-				return A3(_user$project$Finger$Three, ana, _p5._0, _p5._1);
+				return A3(_MatthewJohnHeath$elm_fingertree$Finger$Three, ana, _p5._0, _p5._1);
 			case 'Three':
-				return A4(_user$project$Finger$Four, ana, _p5._0, _p5._1, _p5._2);
+				return A4(_MatthewJohnHeath$elm_fingertree$Finger$Four, ana, _p5._0, _p5._1, _p5._2);
 			default:
 				return finger;
 		}
 	});
-var _user$project$Finger$rightAdd = F2(
+var _MatthewJohnHeath$elm_fingertree$Finger$rightAdd = F2(
 	function (ana, finger) {
 		var _p6 = finger;
 		switch (_p6.ctor) {
 			case 'One':
-				return A2(_user$project$Finger$Two, _p6._0, ana);
+				return A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p6._0, ana);
 			case 'Two':
-				return A3(_user$project$Finger$Three, _p6._0, _p6._1, ana);
+				return A3(_MatthewJohnHeath$elm_fingertree$Finger$Three, _p6._0, _p6._1, ana);
 			case 'Three':
-				return A4(_user$project$Finger$Four, _p6._0, _p6._1, _p6._2, ana);
+				return A4(_MatthewJohnHeath$elm_fingertree$Finger$Four, _p6._0, _p6._1, _p6._2, ana);
 			default:
 				return finger;
 		}
 	});
-var _user$project$Finger$One = function (a) {
+var _MatthewJohnHeath$elm_fingertree$Finger$One = function (a) {
 	return {ctor: 'One', _0: a};
 };
-var _user$project$Finger$map = F2(
+var _MatthewJohnHeath$elm_fingertree$Finger$map = F2(
 	function (f, finger) {
 		var _p7 = finger;
 		switch (_p7.ctor) {
 			case 'One':
-				return _user$project$Finger$One(
+				return _MatthewJohnHeath$elm_fingertree$Finger$One(
 					f(_p7._0));
 			case 'Two':
 				return A2(
-					_user$project$Finger$Two,
+					_MatthewJohnHeath$elm_fingertree$Finger$Two,
 					f(_p7._0),
 					f(_p7._1));
 			case 'Three':
 				return A3(
-					_user$project$Finger$Three,
+					_MatthewJohnHeath$elm_fingertree$Finger$Three,
 					f(_p7._0),
 					f(_p7._1),
 					f(_p7._2));
 			default:
 				return A4(
-					_user$project$Finger$Four,
+					_MatthewJohnHeath$elm_fingertree$Finger$Four,
 					f(_p7._0),
 					f(_p7._1),
 					f(_p7._2),
 					f(_p7._3));
 		}
 	});
-var _user$project$Finger$leftRemove = function (finger) {
+var _MatthewJohnHeath$elm_fingertree$Finger$leftRemove = function (finger) {
 	var _p8 = finger;
 	switch (_p8.ctor) {
 		case 'One':
 			return finger;
 		case 'Two':
-			return _user$project$Finger$One(_p8._1);
+			return _MatthewJohnHeath$elm_fingertree$Finger$One(_p8._1);
 		case 'Three':
-			return A2(_user$project$Finger$Two, _p8._1, _p8._2);
+			return A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p8._1, _p8._2);
 		default:
-			return A3(_user$project$Finger$Three, _p8._1, _p8._2, _p8._3);
+			return A3(_MatthewJohnHeath$elm_fingertree$Finger$Three, _p8._1, _p8._2, _p8._3);
 	}
 };
-var _user$project$Finger$startSplit = function (finger) {
+var _MatthewJohnHeath$elm_fingertree$Finger$startSplit = function (finger) {
 	var _p9 = finger;
 	if (_p9.ctor === 'One') {
 		return {
@@ -2763,56 +2763,56 @@ var _user$project$Finger$startSplit = function (finger) {
 		return {
 			left: _elm_lang$core$Native_List.fromArray(
 				[]),
-			mid: _user$project$Finger$leftPeak(finger),
-			right: _user$project$Finger$toList(
-				_user$project$Finger$leftRemove(finger))
+			mid: _MatthewJohnHeath$elm_fingertree$Finger$leftPeak(finger),
+			right: _MatthewJohnHeath$elm_fingertree$Finger$toList(
+				_MatthewJohnHeath$elm_fingertree$Finger$leftRemove(finger))
 		};
 	}
 };
-var _user$project$Finger$split = F3(
+var _MatthewJohnHeath$elm_fingertree$Finger$split = F3(
 	function (folder, measurement, accumulator) {
 		return function (_p10) {
 			return A4(
-				_user$project$Finger$splitList,
+				_MatthewJohnHeath$elm_fingertree$Finger$splitList,
 				folder,
 				measurement,
 				accumulator,
-				_user$project$Finger$startSplit(_p10));
+				_MatthewJohnHeath$elm_fingertree$Finger$startSplit(_p10));
 		};
 	});
-var _user$project$Finger$rightRemove = function (finger) {
+var _MatthewJohnHeath$elm_fingertree$Finger$rightRemove = function (finger) {
 	var _p11 = finger;
 	switch (_p11.ctor) {
 		case 'One':
 			return finger;
 		case 'Two':
-			return _user$project$Finger$One(_p11._0);
+			return _MatthewJohnHeath$elm_fingertree$Finger$One(_p11._0);
 		case 'Three':
-			return A2(_user$project$Finger$Two, _p11._0, _p11._1);
+			return A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p11._0, _p11._1);
 		default:
-			return A3(_user$project$Finger$Three, _p11._0, _p11._1, _p11._2);
+			return A3(_MatthewJohnHeath$elm_fingertree$Finger$Three, _p11._0, _p11._1, _p11._2);
 	}
 };
-var _user$project$Finger$tryFromList = function (list) {
+var _MatthewJohnHeath$elm_fingertree$Finger$tryFromList = function (list) {
 	var _p12 = list;
 	_v15_4:
 	do {
 		if (_p12.ctor === '::') {
 			if (_p12._1.ctor === '[]') {
 				return _elm_lang$core$Maybe$Just(
-					_user$project$Finger$One(_p12._0));
+					_MatthewJohnHeath$elm_fingertree$Finger$One(_p12._0));
 			} else {
 				if (_p12._1._1.ctor === '[]') {
 					return _elm_lang$core$Maybe$Just(
-						A2(_user$project$Finger$Two, _p12._0, _p12._1._0));
+						A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p12._0, _p12._1._0));
 				} else {
 					if (_p12._1._1._1.ctor === '[]') {
 						return _elm_lang$core$Maybe$Just(
-							A3(_user$project$Finger$Three, _p12._0, _p12._1._0, _p12._1._1._0));
+							A3(_MatthewJohnHeath$elm_fingertree$Finger$Three, _p12._0, _p12._1._0, _p12._1._1._0));
 					} else {
 						if (_p12._1._1._1._1.ctor === '[]') {
 							return _elm_lang$core$Maybe$Just(
-								A4(_user$project$Finger$Four, _p12._0, _p12._1._0, _p12._1._1._0, _p12._1._1._1._0));
+								A4(_MatthewJohnHeath$elm_fingertree$Finger$Four, _p12._0, _p12._1._0, _p12._1._1._0, _p12._1._1._1._0));
 						} else {
 							break _v15_4;
 						}
@@ -2825,7 +2825,7 @@ var _user$project$Finger$tryFromList = function (list) {
 	} while(false);
 	return _elm_lang$core$Maybe$Nothing;
 };
-var _user$project$Node$startSplit = function (node) {
+var _MatthewJohnHeath$elm_fingertree$Node$startSplit = function (node) {
 	var _p0 = node;
 	if (_p0.ctor === 'Node2') {
 		return {
@@ -2845,7 +2845,7 @@ var _user$project$Node$startSplit = function (node) {
 		};
 	}
 };
-var _user$project$Node$split = F4(
+var _MatthewJohnHeath$elm_fingertree$Node$split = F4(
 	function (start, folder, measurement, node) {
 		var loop = F2(
 			function (acc, split) {
@@ -2879,17 +2879,17 @@ var _user$project$Node$split = F4(
 		return A2(
 			loop,
 			start,
-			_user$project$Node$startSplit(node));
+			_MatthewJohnHeath$elm_fingertree$Node$startSplit(node));
 	});
-var _user$project$Node$toFinger = function (node) {
+var _MatthewJohnHeath$elm_fingertree$Node$toFinger = function (node) {
 	var _p2 = node;
 	if (_p2.ctor === 'Node2') {
-		return A2(_user$project$Finger$Two, _p2._0, _p2._1);
+		return A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p2._0, _p2._1);
 	} else {
-		return A3(_user$project$Finger$Three, _p2._0, _p2._1, _p2._2);
+		return A3(_MatthewJohnHeath$elm_fingertree$Finger$Three, _p2._0, _p2._1, _p2._2);
 	}
 };
-var _user$project$Node$reduce = F3(
+var _MatthewJohnHeath$elm_fingertree$Node$reduce = F3(
 	function (f, zero, node) {
 		var _p3 = node;
 		if (_p3.ctor === 'Node2') {
@@ -2907,31 +2907,31 @@ var _user$project$Node$reduce = F3(
 					A2(f, _p3._0, zero)));
 		}
 	});
-var _user$project$Node$Node3 = F3(
+var _MatthewJohnHeath$elm_fingertree$Node$Node3 = F3(
 	function (a, b, c) {
 		return {ctor: 'Node3', _0: a, _1: b, _2: c};
 	});
-var _user$project$Node$Node2 = F2(
+var _MatthewJohnHeath$elm_fingertree$Node$Node2 = F2(
 	function (a, b) {
 		return {ctor: 'Node2', _0: a, _1: b};
 	});
-var _user$project$Node$map = F2(
+var _MatthewJohnHeath$elm_fingertree$Node$map = F2(
 	function (f, node) {
 		var _p4 = node;
 		if (_p4.ctor === 'Node2') {
 			return A2(
-				_user$project$Node$Node2,
+				_MatthewJohnHeath$elm_fingertree$Node$Node2,
 				f(_p4._0),
 				f(_p4._1));
 		} else {
 			return A3(
-				_user$project$Node$Node3,
+				_MatthewJohnHeath$elm_fingertree$Node$Node3,
 				f(_p4._0),
 				f(_p4._1),
 				f(_p4._2));
 		}
 	});
-var _user$project$Internal$nodify = function (list) {
+var _MatthewJohnHeath$elm_fingertree$Internal$nodify = function (list) {
 	var _p0 = list;
 	if (_p0.ctor === '[]') {
 		return _elm_lang$core$Native_List.fromArray(
@@ -2944,25 +2944,25 @@ var _user$project$Internal$nodify = function (list) {
 			if (_p0._1._1.ctor === '[]') {
 				return _elm_lang$core$Native_List.fromArray(
 					[
-						A2(_user$project$Node$Node2, _p0._0, _p0._1._0)
+						A2(_MatthewJohnHeath$elm_fingertree$Node$Node2, _p0._0, _p0._1._0)
 					]);
 			} else {
 				if (_p0._1._1._1.ctor === '[]') {
 					return _elm_lang$core$Native_List.fromArray(
 						[
-							A3(_user$project$Node$Node3, _p0._0, _p0._1._0, _p0._1._1._0)
+							A3(_MatthewJohnHeath$elm_fingertree$Node$Node3, _p0._0, _p0._1._0, _p0._1._1._0)
 						]);
 				} else {
 					return A2(
 						_elm_lang$core$List_ops['::'],
-						A2(_user$project$Node$Node2, _p0._0, _p0._1._0),
-						_user$project$Internal$nodify(_p0._1._1));
+						A2(_MatthewJohnHeath$elm_fingertree$Node$Node2, _p0._0, _p0._1._0),
+						_MatthewJohnHeath$elm_fingertree$Internal$nodify(_p0._1._1));
 				}
 			}
 		}
 	}
 };
-var _user$project$Internal$rightPeak = function (fingerTree) {
+var _MatthewJohnHeath$elm_fingertree$Internal$rightPeak = function (fingerTree) {
 	var _p1 = fingerTree;
 	switch (_p1.ctor) {
 		case 'Empty':
@@ -2971,10 +2971,10 @@ var _user$project$Internal$rightPeak = function (fingerTree) {
 			return _elm_lang$core$Maybe$Just(_p1._0);
 		default:
 			return _elm_lang$core$Maybe$Just(
-				_user$project$Finger$rightPeak(_p1._3));
+				_MatthewJohnHeath$elm_fingertree$Finger$rightPeak(_p1._3));
 	}
 };
-var _user$project$Internal$leftPeak = function (fingerTree) {
+var _MatthewJohnHeath$elm_fingertree$Internal$leftPeak = function (fingerTree) {
 	var _p2 = fingerTree;
 	switch (_p2.ctor) {
 		case 'Empty':
@@ -2983,10 +2983,10 @@ var _user$project$Internal$leftPeak = function (fingerTree) {
 			return _elm_lang$core$Maybe$Just(_p2._0);
 		default:
 			return _elm_lang$core$Maybe$Just(
-				_user$project$Finger$leftPeak(_p2._0));
+				_MatthewJohnHeath$elm_fingertree$Finger$leftPeak(_p2._0));
 	}
 };
-var _user$project$Internal$reduce = F3(
+var _MatthewJohnHeath$elm_fingertree$Internal$reduce = F3(
 	function (monoid, projection, fingerTree) {
 		var f = function (_p3) {
 			return monoid.op(
@@ -2999,72 +2999,72 @@ var _user$project$Internal$reduce = F3(
 			case 'Single':
 				return A2(f, _p4._0, monoid.zero);
 			default:
-				var leftReduced = A3(_user$project$Finger$reduce, f, monoid.zero, _p4._0);
+				var leftReduced = A3(_MatthewJohnHeath$elm_fingertree$Finger$reduce, f, monoid.zero, _p4._0);
 				var midReduced = A2(monoid.op, _p4._2, leftReduced);
-				return A3(_user$project$Finger$reduce, f, midReduced, _p4._3);
+				return A3(_MatthewJohnHeath$elm_fingertree$Finger$reduce, f, midReduced, _p4._3);
 		}
 	});
-var _user$project$Internal$Split = F3(
+var _MatthewJohnHeath$elm_fingertree$Internal$Split = F3(
 	function (a, b, c) {
 		return {left: a, middle: b, right: c};
 	});
-var _user$project$Internal$Deep = F4(
+var _MatthewJohnHeath$elm_fingertree$Internal$Deep = F4(
 	function (a, b, c, d) {
 		return {ctor: 'Deep', _0: a, _1: b, _2: c, _3: d};
 	});
-var _user$project$Internal$Single = function (a) {
+var _MatthewJohnHeath$elm_fingertree$Internal$Single = function (a) {
 	return {ctor: 'Single', _0: a};
 };
-var _user$project$Internal$Empty = {ctor: 'Empty'};
-var _user$project$Internal$empty = _user$project$Internal$Empty;
-var _user$project$Internal$ofFinger = F2(
+var _MatthewJohnHeath$elm_fingertree$Internal$Empty = {ctor: 'Empty'};
+var _MatthewJohnHeath$elm_fingertree$Internal$empty = _MatthewJohnHeath$elm_fingertree$Internal$Empty;
+var _MatthewJohnHeath$elm_fingertree$Internal$ofFinger = F2(
 	function (zero, finger) {
 		var _p5 = finger;
 		switch (_p5.ctor) {
 			case 'One':
-				return _user$project$Internal$Single(_p5._0);
+				return _MatthewJohnHeath$elm_fingertree$Internal$Single(_p5._0);
 			case 'Two':
 				return A4(
-					_user$project$Internal$Deep,
-					_user$project$Finger$One(_p5._0),
-					_user$project$Internal$Empty,
+					_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+					_MatthewJohnHeath$elm_fingertree$Finger$One(_p5._0),
+					_MatthewJohnHeath$elm_fingertree$Internal$Empty,
 					zero,
-					_user$project$Finger$One(_p5._1));
+					_MatthewJohnHeath$elm_fingertree$Finger$One(_p5._1));
 			case 'Three':
 				return A4(
-					_user$project$Internal$Deep,
-					A2(_user$project$Finger$Two, _p5._0, _p5._1),
-					_user$project$Internal$Empty,
+					_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+					A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p5._0, _p5._1),
+					_MatthewJohnHeath$elm_fingertree$Internal$Empty,
 					zero,
-					_user$project$Finger$One(_p5._2));
+					_MatthewJohnHeath$elm_fingertree$Finger$One(_p5._2));
 			default:
 				return A4(
-					_user$project$Internal$Deep,
-					A2(_user$project$Finger$Two, _p5._0, _p5._1),
-					_user$project$Internal$Empty,
+					_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+					A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p5._0, _p5._1),
+					_MatthewJohnHeath$elm_fingertree$Internal$Empty,
 					zero,
-					A2(_user$project$Finger$Two, _p5._2, _p5._3));
+					A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p5._2, _p5._3));
 		}
 	});
-var _user$project$Internal$leftPush = F4(
+var _MatthewJohnHeath$elm_fingertree$Internal$leftPush = F4(
 	function (monoid, projection, a0, fingerTree) {
 		var zero = monoid.zero;
 		var _p6 = fingerTree;
 		switch (_p6.ctor) {
 			case 'Empty':
-				return _user$project$Internal$Single(a0);
+				return _MatthewJohnHeath$elm_fingertree$Internal$Single(a0);
 			case 'Single':
 				return A4(
-					_user$project$Internal$Deep,
-					_user$project$Finger$One(a0),
-					_user$project$Internal$Empty,
+					_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+					_MatthewJohnHeath$elm_fingertree$Finger$One(a0),
+					_MatthewJohnHeath$elm_fingertree$Internal$Empty,
 					zero,
-					_user$project$Finger$One(_p6._0));
+					_MatthewJohnHeath$elm_fingertree$Finger$One(_p6._0));
 			default:
 				if (_p6._0.ctor === 'Four') {
-					var node = A3(_user$project$Node$Node3, _p6._0._1, _p6._0._2, _p6._0._3);
+					var node = A3(_MatthewJohnHeath$elm_fingertree$Node$Node3, _p6._0._1, _p6._0._2, _p6._0._3);
 					var nodeAnnotation = A3(
-						_user$project$Node$reduce,
+						_MatthewJohnHeath$elm_fingertree$Node$reduce,
 						function (_p7) {
 							return monoid.op(
 								projection(_p7));
@@ -3072,101 +3072,101 @@ var _user$project$Internal$leftPush = F4(
 						zero,
 						node);
 					var midTree = A4(
-						_user$project$Internal$leftPush,
+						_MatthewJohnHeath$elm_fingertree$Internal$leftPush,
 						monoid,
 						_elm_lang$core$Basics$snd,
 						{ctor: '_Tuple2', _0: node, _1: nodeAnnotation},
 						_p6._1);
-					var midAnnotation = A3(_user$project$Internal$reduce, monoid, _elm_lang$core$Basics$snd, midTree);
+					var midAnnotation = A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, monoid, _elm_lang$core$Basics$snd, midTree);
 					return A4(
-						_user$project$Internal$Deep,
-						A2(_user$project$Finger$Two, a0, _p6._0._0),
+						_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+						A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, a0, _p6._0._0),
 						midTree,
 						midAnnotation,
 						_p6._3);
 				} else {
 					return A4(
-						_user$project$Internal$Deep,
-						A2(_user$project$Finger$leftAdd, a0, _p6._0),
+						_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+						A2(_MatthewJohnHeath$elm_fingertree$Finger$leftAdd, a0, _p6._0),
 						_p6._1,
 						_p6._2,
 						_p6._3);
 				}
 		}
 	});
-var _user$project$Internal$leftPop = F2(
+var _MatthewJohnHeath$elm_fingertree$Internal$leftPop = F2(
 	function (mon, fingerTree) {
 		var _p8 = fingerTree;
 		switch (_p8.ctor) {
 			case 'Empty':
-				return _user$project$Internal$Empty;
+				return _MatthewJohnHeath$elm_fingertree$Internal$Empty;
 			case 'Single':
-				return _user$project$Internal$Empty;
+				return _MatthewJohnHeath$elm_fingertree$Internal$Empty;
 			default:
 				if (_p8._0.ctor === 'One') {
 					var _p11 = _p8._3;
 					var _p10 = _p8._1;
-					var _p9 = _user$project$Internal$leftPeak(_p10);
+					var _p9 = _MatthewJohnHeath$elm_fingertree$Internal$leftPeak(_p10);
 					if (_p9.ctor === 'Just') {
-						var newMid = A2(_user$project$Internal$leftPop, mon, _p10);
+						var newMid = A2(_MatthewJohnHeath$elm_fingertree$Internal$leftPop, mon, _p10);
 						return A4(
-							_user$project$Internal$Deep,
-							_user$project$Node$toFinger(_p9._0._0),
+							_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+							_MatthewJohnHeath$elm_fingertree$Node$toFinger(_p9._0._0),
 							newMid,
-							A3(_user$project$Internal$reduce, mon, _elm_lang$core$Basics$snd, newMid),
+							A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, mon, _elm_lang$core$Basics$snd, newMid),
 							_p11);
 					} else {
-						return A2(_user$project$Internal$ofFinger, mon.zero, _p11);
+						return A2(_MatthewJohnHeath$elm_fingertree$Internal$ofFinger, mon.zero, _p11);
 					}
 				} else {
 					return A4(
-						_user$project$Internal$Deep,
-						_user$project$Finger$leftRemove(_p8._0),
+						_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+						_MatthewJohnHeath$elm_fingertree$Finger$leftRemove(_p8._0),
 						_p8._1,
 						_p8._2,
 						_p8._3);
 				}
 		}
 	});
-var _user$project$Internal$deepRight = F5(
+var _MatthewJohnHeath$elm_fingertree$Internal$deepRight = F5(
 	function (mon, left, mid, annotation, right) {
-		var _p12 = _user$project$Finger$tryFromList(left);
+		var _p12 = _MatthewJohnHeath$elm_fingertree$Finger$tryFromList(left);
 		if (_p12.ctor === 'Just') {
-			return A4(_user$project$Internal$Deep, _p12._0, mid, annotation, right);
+			return A4(_MatthewJohnHeath$elm_fingertree$Internal$Deep, _p12._0, mid, annotation, right);
 		} else {
-			var _p13 = _user$project$Internal$leftPeak(mid);
+			var _p13 = _MatthewJohnHeath$elm_fingertree$Internal$leftPeak(mid);
 			if (_p13.ctor === 'Just') {
-				var newmid = A2(_user$project$Internal$leftPop, mon, mid);
+				var newmid = A2(_MatthewJohnHeath$elm_fingertree$Internal$leftPop, mon, mid);
 				return A4(
-					_user$project$Internal$Deep,
-					_user$project$Node$toFinger(_p13._0._0),
+					_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+					_MatthewJohnHeath$elm_fingertree$Node$toFinger(_p13._0._0),
 					newmid,
-					A3(_user$project$Internal$reduce, mon, _elm_lang$core$Basics$snd, newmid),
+					A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, mon, _elm_lang$core$Basics$snd, newmid),
 					right);
 			} else {
-				return A2(_user$project$Internal$ofFinger, mon.zero, right);
+				return A2(_MatthewJohnHeath$elm_fingertree$Internal$ofFinger, mon.zero, right);
 			}
 		}
 	});
-var _user$project$Internal$rightPush = F4(
+var _MatthewJohnHeath$elm_fingertree$Internal$rightPush = F4(
 	function (monoid, projection, a0, fingerTree) {
 		var zero = monoid.zero;
 		var _p14 = fingerTree;
 		switch (_p14.ctor) {
 			case 'Empty':
-				return _user$project$Internal$Single(a0);
+				return _MatthewJohnHeath$elm_fingertree$Internal$Single(a0);
 			case 'Single':
 				return A4(
-					_user$project$Internal$Deep,
-					_user$project$Finger$One(_p14._0),
-					_user$project$Internal$Empty,
+					_MatthewJohnHeath$elm_fingertree$Internal$Deep,
+					_MatthewJohnHeath$elm_fingertree$Finger$One(_p14._0),
+					_MatthewJohnHeath$elm_fingertree$Internal$Empty,
 					zero,
-					_user$project$Finger$One(a0));
+					_MatthewJohnHeath$elm_fingertree$Finger$One(a0));
 			default:
 				if (_p14._3.ctor === 'Four') {
-					var node = A3(_user$project$Node$Node3, _p14._3._0, _p14._3._1, _p14._3._2);
+					var node = A3(_MatthewJohnHeath$elm_fingertree$Node$Node3, _p14._3._0, _p14._3._1, _p14._3._2);
 					var nodeAnnotation = A3(
-						_user$project$Node$reduce,
+						_MatthewJohnHeath$elm_fingertree$Node$reduce,
 						function (_p15) {
 							return monoid.op(
 								projection(_p15));
@@ -3174,100 +3174,100 @@ var _user$project$Internal$rightPush = F4(
 						zero,
 						node);
 					var midTree = A4(
-						_user$project$Internal$rightPush,
+						_MatthewJohnHeath$elm_fingertree$Internal$rightPush,
 						monoid,
 						_elm_lang$core$Basics$snd,
 						{ctor: '_Tuple2', _0: node, _1: nodeAnnotation},
 						_p14._1);
-					var midAnnotation = A3(_user$project$Internal$reduce, monoid, _elm_lang$core$Basics$snd, midTree);
+					var midAnnotation = A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, monoid, _elm_lang$core$Basics$snd, midTree);
 					return A4(
-						_user$project$Internal$Deep,
+						_MatthewJohnHeath$elm_fingertree$Internal$Deep,
 						_p14._0,
 						midTree,
 						midAnnotation,
-						A2(_user$project$Finger$Two, _p14._3._3, a0));
+						A2(_MatthewJohnHeath$elm_fingertree$Finger$Two, _p14._3._3, a0));
 				} else {
 					return A4(
-						_user$project$Internal$Deep,
+						_MatthewJohnHeath$elm_fingertree$Internal$Deep,
 						_p14._0,
 						_p14._1,
 						_p14._2,
-						A2(_user$project$Finger$rightAdd, a0, _p14._3));
+						A2(_MatthewJohnHeath$elm_fingertree$Finger$rightAdd, a0, _p14._3));
 				}
 		}
 	});
-var _user$project$Internal$ofList = F3(
+var _MatthewJohnHeath$elm_fingertree$Internal$ofList = F3(
 	function (monoid, projection, list) {
 		return A3(
 			_elm_lang$core$List$foldl,
-			A2(_user$project$Internal$rightPush, monoid, projection),
-			_user$project$Internal$empty,
+			A2(_MatthewJohnHeath$elm_fingertree$Internal$rightPush, monoid, projection),
+			_MatthewJohnHeath$elm_fingertree$Internal$empty,
 			list);
 	});
-var _user$project$Internal$rightPop = F2(
+var _MatthewJohnHeath$elm_fingertree$Internal$rightPop = F2(
 	function (mon, fingerTree) {
 		var _p16 = fingerTree;
 		switch (_p16.ctor) {
 			case 'Empty':
-				return _user$project$Internal$Empty;
+				return _MatthewJohnHeath$elm_fingertree$Internal$Empty;
 			case 'Single':
-				return _user$project$Internal$Empty;
+				return _MatthewJohnHeath$elm_fingertree$Internal$Empty;
 			default:
 				if (_p16._3.ctor === 'One') {
 					var _p19 = _p16._1;
 					var _p18 = _p16._0;
-					var _p17 = _user$project$Internal$rightPeak(_p19);
+					var _p17 = _MatthewJohnHeath$elm_fingertree$Internal$rightPeak(_p19);
 					if (_p17.ctor === 'Just') {
-						var newMid = A2(_user$project$Internal$rightPop, mon, _p19);
+						var newMid = A2(_MatthewJohnHeath$elm_fingertree$Internal$rightPop, mon, _p19);
 						return A4(
-							_user$project$Internal$Deep,
+							_MatthewJohnHeath$elm_fingertree$Internal$Deep,
 							_p18,
 							newMid,
-							A3(_user$project$Internal$reduce, mon, _elm_lang$core$Basics$snd, newMid),
-							_user$project$Node$toFinger(_p17._0._0));
+							A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, mon, _elm_lang$core$Basics$snd, newMid),
+							_MatthewJohnHeath$elm_fingertree$Node$toFinger(_p17._0._0));
 					} else {
-						return A2(_user$project$Internal$ofFinger, mon.zero, _p18);
+						return A2(_MatthewJohnHeath$elm_fingertree$Internal$ofFinger, mon.zero, _p18);
 					}
 				} else {
 					return A4(
-						_user$project$Internal$Deep,
+						_MatthewJohnHeath$elm_fingertree$Internal$Deep,
 						_p16._0,
 						_p16._1,
 						_p16._2,
-						_user$project$Finger$rightRemove(_p16._3));
+						_MatthewJohnHeath$elm_fingertree$Finger$rightRemove(_p16._3));
 				}
 		}
 	});
-var _user$project$Internal$deepLeft = F5(
+var _MatthewJohnHeath$elm_fingertree$Internal$deepLeft = F5(
 	function (mon, left, mid, annotation, right) {
-		var _p20 = _user$project$Finger$tryFromList(right);
+		var _p20 = _MatthewJohnHeath$elm_fingertree$Finger$tryFromList(right);
 		if (_p20.ctor === 'Just') {
-			return A4(_user$project$Internal$Deep, left, mid, annotation, _p20._0);
+			return A4(_MatthewJohnHeath$elm_fingertree$Internal$Deep, left, mid, annotation, _p20._0);
 		} else {
-			var _p21 = _user$project$Internal$rightPeak(mid);
+			var _p21 = _MatthewJohnHeath$elm_fingertree$Internal$rightPeak(mid);
 			if (_p21.ctor === 'Just') {
-				var newmid = A2(_user$project$Internal$rightPop, mon, mid);
+				var newmid = A2(_MatthewJohnHeath$elm_fingertree$Internal$rightPop, mon, mid);
 				return A4(
-					_user$project$Internal$Deep,
+					_MatthewJohnHeath$elm_fingertree$Internal$Deep,
 					left,
 					newmid,
-					A3(_user$project$Internal$reduce, mon, _elm_lang$core$Basics$snd, newmid),
-					_user$project$Node$toFinger(_p21._0._0));
+					A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, mon, _elm_lang$core$Basics$snd, newmid),
+					_MatthewJohnHeath$elm_fingertree$Node$toFinger(_p21._0._0));
 			} else {
-				return A2(_user$project$Internal$ofFinger, mon.zero, left);
+				return A2(_MatthewJohnHeath$elm_fingertree$Internal$ofFinger, mon.zero, left);
 			}
 		}
 	});
-var _user$project$Internal$concatWithMiddle = F5(
+var _MatthewJohnHeath$elm_fingertree$Internal$concatWithMiddle = F5(
 	function (monoid, projection, left, middle, right) {
-		var rPush = A2(_user$project$Internal$rightPush, monoid, projection);
-		var lPush = A2(_user$project$Internal$leftPush, monoid, projection);
+		var rPush = A2(_MatthewJohnHeath$elm_fingertree$Internal$rightPush, monoid, projection);
+		var lPush = A2(_MatthewJohnHeath$elm_fingertree$Internal$leftPush, monoid, projection);
 		var annotate = function (node) {
 			return {
 				ctor: '_Tuple2',
 				_0: node,
 				_1: A3(
-					_user$project$Node$reduce,
+					_MatthewJohnHeath$elm_fingertree$Node$reduce,
 					function (_p22) {
 						return monoid.op(
 							projection(_p22));
@@ -3287,13 +3287,13 @@ var _user$project$Internal$concatWithMiddle = F5(
 							return A2(
 								lPush,
 								_p23._1._0,
-								A3(loop, _user$project$Internal$Empty, _p23._1._1, _p23._2));
+								A3(loop, _MatthewJohnHeath$elm_fingertree$Internal$Empty, _p23._1._1, _p23._2));
 						}
 					case 'Single':
 						return A2(
 							lPush,
 							_p23._0._0,
-							A3(loop, _user$project$Internal$Empty, _p23._1, _p23._2));
+							A3(loop, _MatthewJohnHeath$elm_fingertree$Internal$Empty, _p23._1, _p23._2));
 					default:
 						switch (_p23._2.ctor) {
 							case 'Empty':
@@ -3309,41 +3309,41 @@ var _user$project$Internal$concatWithMiddle = F5(
 											loop,
 											_p25,
 											_elm_lang$core$List$reverse(_p24._1),
-											_user$project$Internal$Empty));
+											_MatthewJohnHeath$elm_fingertree$Internal$Empty));
 								}
 							case 'Single':
 								return A2(
 									rPush,
 									_p23._2._0,
-									A3(loop, _p23._0, _p23._1, _user$project$Internal$Empty));
+									A3(loop, _p23._0, _p23._1, _MatthewJohnHeath$elm_fingertree$Internal$Empty));
 							default:
 								var newMidList = A2(
 									_elm_lang$core$List$map,
 									annotate,
-									_user$project$Internal$nodify(
+									_MatthewJohnHeath$elm_fingertree$Internal$nodify(
 										A2(
 											_elm_lang$core$Basics_ops['++'],
-											_user$project$Finger$toList(_p23._0._3),
+											_MatthewJohnHeath$elm_fingertree$Finger$toList(_p23._0._3),
 											A2(
 												_elm_lang$core$Basics_ops['++'],
 												_p23._1,
-												_user$project$Finger$toList(_p23._2._0)))));
-								var newMidTree = A5(_user$project$Internal$concatWithMiddle, monoid, _elm_lang$core$Basics$snd, _p23._0._1, newMidList, _p23._2._1);
+												_MatthewJohnHeath$elm_fingertree$Finger$toList(_p23._2._0)))));
+								var newMidTree = A5(_MatthewJohnHeath$elm_fingertree$Internal$concatWithMiddle, monoid, _elm_lang$core$Basics$snd, _p23._0._1, newMidList, _p23._2._1);
 								return A4(
-									_user$project$Internal$Deep,
+									_MatthewJohnHeath$elm_fingertree$Internal$Deep,
 									_p23._0._0,
 									newMidTree,
-									A3(_user$project$Internal$reduce, monoid, _elm_lang$core$Basics$snd, newMidTree),
+									A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, monoid, _elm_lang$core$Basics$snd, newMidTree),
 									_p23._2._3);
 						}
 				}
 			});
 		return A3(loop, left, middle, right);
 	});
-var _user$project$Internal$concat = F4(
+var _MatthewJohnHeath$elm_fingertree$Internal$concat = F4(
 	function (monoid, projection, left, right) {
 		return A5(
-			_user$project$Internal$concatWithMiddle,
+			_MatthewJohnHeath$elm_fingertree$Internal$concatWithMiddle,
 			monoid,
 			projection,
 			left,
@@ -3351,7 +3351,7 @@ var _user$project$Internal$concat = F4(
 				[]),
 			right);
 	});
-var _user$project$Internal$split = F5(
+var _MatthewJohnHeath$elm_fingertree$Internal$split = F5(
 	function (monoid, projection, measurement, start, tree) {
 		var folder = F2(
 			function (a, b) {
@@ -3360,23 +3360,23 @@ var _user$project$Internal$split = F5(
 					b,
 					projection(a));
 			});
-		var red = A2(_user$project$Internal$reduce, monoid, _elm_lang$core$Basics$snd);
-		var deepL = _user$project$Internal$deepLeft(monoid);
-		var deepR = _user$project$Internal$deepRight(monoid);
-		var fromList = A2(_user$project$Internal$ofList, monoid, projection);
+		var red = A2(_MatthewJohnHeath$elm_fingertree$Internal$reduce, monoid, _elm_lang$core$Basics$snd);
+		var deepL = _MatthewJohnHeath$elm_fingertree$Internal$deepLeft(monoid);
+		var deepR = _MatthewJohnHeath$elm_fingertree$Internal$deepRight(monoid);
+		var fromList = A2(_MatthewJohnHeath$elm_fingertree$Internal$ofList, monoid, projection);
 		var _p26 = tree;
 		switch (_p26.ctor) {
 			case 'Single':
 				var _p27 = _p26._0;
 				return measurement(
 					A2(folder, _p27, start)) ? _elm_lang$core$Maybe$Just(
-					{left: _user$project$Internal$Empty, middle: _p27, right: _user$project$Internal$Empty}) : _elm_lang$core$Maybe$Nothing;
+					{left: _MatthewJohnHeath$elm_fingertree$Internal$Empty, middle: _p27, right: _MatthewJohnHeath$elm_fingertree$Internal$Empty}) : _elm_lang$core$Maybe$Nothing;
 			case 'Deep':
 				var _p38 = _p26._3;
 				var _p37 = _p26._1;
 				var _p36 = _p26._0;
 				var _p35 = _p26._2;
-				var _p28 = A4(_user$project$Finger$split, folder, measurement, start, _p36);
+				var _p28 = A4(_MatthewJohnHeath$elm_fingertree$Finger$split, folder, measurement, start, _p36);
 				if (_p28.ctor === 'Just') {
 					var _p29 = _p28._0;
 					return _elm_lang$core$Maybe$Just(
@@ -3386,8 +3386,8 @@ var _user$project$Internal$split = F5(
 							right: A4(deepR, _p29.right, _p37, _p35, _p38)
 						});
 				} else {
-					var leftReduced = A3(_user$project$Finger$reduce, folder, start, _p36);
-					var _p30 = A5(_user$project$Internal$split, monoid, _elm_lang$core$Basics$snd, measurement, leftReduced, _p37);
+					var leftReduced = A3(_MatthewJohnHeath$elm_fingertree$Finger$reduce, folder, start, _p36);
+					var _p30 = A5(_MatthewJohnHeath$elm_fingertree$Internal$split, monoid, _elm_lang$core$Basics$snd, measurement, leftReduced, _p37);
 					if (_p30.ctor === 'Just') {
 						var _p32 = _p30._0;
 						var _p31 = _p32.middle;
@@ -3396,7 +3396,7 @@ var _user$project$Internal$split = F5(
 							monoid.op,
 							leftReduced,
 							red(_p32.left));
-						var splitNode = A4(_user$project$Node$split, upToNode, folder, measurement, node);
+						var splitNode = A4(_MatthewJohnHeath$elm_fingertree$Node$split, upToNode, folder, measurement, node);
 						var splitLeft = A4(
 							deepL,
 							_p36,
@@ -3413,7 +3413,7 @@ var _user$project$Internal$split = F5(
 							{left: splitLeft, middle: splitNode.mid, right: splitRight});
 					} else {
 						var midReduced = A2(monoid.op, leftReduced, _p35);
-						var _p33 = A4(_user$project$Finger$split, folder, measurement, midReduced, _p38);
+						var _p33 = A4(_MatthewJohnHeath$elm_fingertree$Finger$split, folder, measurement, midReduced, _p38);
 						if (_p33.ctor === 'Just') {
 							var _p34 = _p33._0;
 							return _elm_lang$core$Maybe$Just(
@@ -3431,7 +3431,7 @@ var _user$project$Internal$split = F5(
 				return _elm_lang$core$Maybe$Nothing;
 		}
 	});
-var _user$project$Annotated$annotate = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$annotate = F2(
 	function (aft, asplit) {
 		return {
 			left: _elm_lang$core$Native_Utils.update(
@@ -3443,58 +3443,58 @@ var _user$project$Annotated$annotate = F2(
 				{tree: asplit.right})
 		};
 	});
-var _user$project$Annotated$split = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$split = F2(
 	function (measure, aft) {
 		return A2(
 			_elm_lang$core$Maybe$map,
-			_user$project$Annotated$annotate(aft),
-			A5(_user$project$Internal$split, aft.monoid, aft.projection, measure, aft.monoid.zero, aft.tree));
+			_MatthewJohnHeath$elm_fingertree$Annotated$annotate(aft),
+			A5(_MatthewJohnHeath$elm_fingertree$Internal$split, aft.monoid, aft.projection, measure, aft.monoid.zero, aft.tree));
 	});
-var _user$project$Annotated$get = function (measure) {
+var _MatthewJohnHeath$elm_fingertree$Annotated$get = function (measure) {
 	return function (_p0) {
 		return A2(
 			_elm_lang$core$Maybe$map,
 			function (_) {
 				return _.middle;
 			},
-			A2(_user$project$Annotated$split, measure, _p0));
+			A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, _p0));
 	};
 };
-var _user$project$Annotated$before = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$before = F2(
 	function (measure, aft) {
-		var _p1 = A2(_user$project$Annotated$split, measure, aft);
+		var _p1 = A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, aft);
 		if (_p1.ctor === 'Just') {
 			return _p1._0.left;
 		} else {
 			return _elm_lang$core$Native_Utils.update(
 				aft,
-				{tree: _user$project$Internal$Empty});
+				{tree: _MatthewJohnHeath$elm_fingertree$Internal$Empty});
 		}
 	});
-var _user$project$Annotated$after = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$after = F2(
 	function (measure, aft) {
-		var _p2 = A2(_user$project$Annotated$split, measure, aft);
+		var _p2 = A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, aft);
 		if (_p2.ctor === 'Just') {
 			return _p2._0.right;
 		} else {
 			return _elm_lang$core$Native_Utils.update(
 				aft,
-				{tree: _user$project$Internal$Empty});
+				{tree: _MatthewJohnHeath$elm_fingertree$Internal$Empty});
 		}
 	});
-var _user$project$Annotated$concatWithMiddle = F3(
+var _MatthewJohnHeath$elm_fingertree$Annotated$concatWithMiddle = F3(
 	function (l, m, r) {
 		return _elm_lang$core$Native_Utils.update(
 			l,
 			{
-				tree: A5(_user$project$Internal$concatWithMiddle, l.monoid, l.projection, l.tree, m, r.tree)
+				tree: A5(_MatthewJohnHeath$elm_fingertree$Internal$concatWithMiddle, l.monoid, l.projection, l.tree, m, r.tree)
 			});
 	});
-var _user$project$Annotated$set = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$set = F2(
 	function (measure, value) {
 		var rebuild = function (asplit) {
 			return A3(
-				_user$project$Annotated$concatWithMiddle,
+				_MatthewJohnHeath$elm_fingertree$Annotated$concatWithMiddle,
 				asplit.left,
 				_elm_lang$core$Native_List.fromArray(
 					[value]),
@@ -3504,14 +3504,14 @@ var _user$project$Annotated$set = F2(
 			return A2(
 				_elm_lang$core$Maybe$map,
 				rebuild,
-				A2(_user$project$Annotated$split, measure, _p3));
+				A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, _p3));
 		};
 	});
-var _user$project$Annotated$insert = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$insert = F2(
 	function (measure, value) {
 		var rebuild = function (asplit) {
 			return A3(
-				_user$project$Annotated$concatWithMiddle,
+				_MatthewJohnHeath$elm_fingertree$Annotated$concatWithMiddle,
 				asplit.left,
 				_elm_lang$core$Native_List.fromArray(
 					[value, asplit.middle]),
@@ -3521,200 +3521,160 @@ var _user$project$Annotated$insert = F2(
 			return A2(
 				_elm_lang$core$Maybe$map,
 				rebuild,
-				A2(_user$project$Annotated$split, measure, _p4));
+				A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, _p4));
 		};
 	});
-var _user$project$Annotated$concat = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$concat = F2(
 	function (l, r) {
 		return _elm_lang$core$Native_Utils.update(
 			l,
 			{
-				tree: A4(_user$project$Internal$concat, l.monoid, l.projection, l.tree, r.tree)
+				tree: A4(_MatthewJohnHeath$elm_fingertree$Internal$concat, l.monoid, l.projection, l.tree, r.tree)
 			});
 	});
-var _user$project$Annotated$remove = function (measure) {
+var _MatthewJohnHeath$elm_fingertree$Annotated$remove = function (measure) {
 	return function (_p5) {
 		return A2(
 			_elm_lang$core$Maybe$map,
 			function (asplit) {
-				return A2(_user$project$Annotated$concat, asplit.left, asplit.right);
+				return A2(_MatthewJohnHeath$elm_fingertree$Annotated$concat, asplit.left, asplit.right);
 			},
-			A2(_user$project$Annotated$split, measure, _p5));
+			A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, _p5));
 	};
 };
-var _user$project$Annotated$rightPush = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$rightPush = F2(
 	function (ana, aft) {
 		return _elm_lang$core$Native_Utils.update(
 			aft,
 			{
-				tree: A4(_user$project$Internal$rightPush, aft.monoid, aft.projection, ana, aft.tree)
+				tree: A4(_MatthewJohnHeath$elm_fingertree$Internal$rightPush, aft.monoid, aft.projection, ana, aft.tree)
 			});
 	});
-var _user$project$Annotated$upTo = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$upTo = F2(
 	function (measure, aft) {
-		var _p6 = A2(_user$project$Annotated$split, measure, aft);
+		var _p6 = A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, aft);
 		if (_p6.ctor === 'Just') {
 			var _p7 = _p6._0;
-			return A2(_user$project$Annotated$rightPush, _p7.middle, _p7.left);
+			return A2(_MatthewJohnHeath$elm_fingertree$Annotated$rightPush, _p7.middle, _p7.left);
 		} else {
 			return _elm_lang$core$Native_Utils.update(
 				aft,
-				{tree: _user$project$Internal$Empty});
+				{tree: _MatthewJohnHeath$elm_fingertree$Internal$Empty});
 		}
 	});
-var _user$project$Annotated$rightPop = function (aft) {
+var _MatthewJohnHeath$elm_fingertree$Annotated$rightPop = function (aft) {
 	return _elm_lang$core$Native_Utils.update(
 		aft,
 		{
-			tree: A2(_user$project$Internal$rightPop, aft.monoid, aft.tree)
+			tree: A2(_MatthewJohnHeath$elm_fingertree$Internal$rightPop, aft.monoid, aft.tree)
 		});
 };
-var _user$project$Annotated$rightPeek = function (_p8) {
-	return _user$project$Internal$rightPeak(
+var _MatthewJohnHeath$elm_fingertree$Annotated$rightPeek = function (_p8) {
+	return _MatthewJohnHeath$elm_fingertree$Internal$rightPeak(
 		function (_) {
 			return _.tree;
 		}(_p8));
 };
-var _user$project$Annotated$leftPush = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$leftPush = F2(
 	function (ana, aft) {
 		return _elm_lang$core$Native_Utils.update(
 			aft,
 			{
-				tree: A4(_user$project$Internal$leftPush, aft.monoid, aft.projection, ana, aft.tree)
+				tree: A4(_MatthewJohnHeath$elm_fingertree$Internal$leftPush, aft.monoid, aft.projection, ana, aft.tree)
 			});
 	});
-var _user$project$Annotated$from = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$from = F2(
 	function (measure, aft) {
-		var _p9 = A2(_user$project$Annotated$split, measure, aft);
+		var _p9 = A2(_MatthewJohnHeath$elm_fingertree$Annotated$split, measure, aft);
 		if (_p9.ctor === 'Just') {
 			var _p10 = _p9._0;
-			return A2(_user$project$Annotated$leftPush, _p10.middle, _p10.right);
+			return A2(_MatthewJohnHeath$elm_fingertree$Annotated$leftPush, _p10.middle, _p10.right);
 		} else {
 			return _elm_lang$core$Native_Utils.update(
 				aft,
-				{tree: _user$project$Internal$Empty});
+				{tree: _MatthewJohnHeath$elm_fingertree$Internal$Empty});
 		}
 	});
-var _user$project$Annotated$leftPop = function (aft) {
+var _MatthewJohnHeath$elm_fingertree$Annotated$leftPop = function (aft) {
 	return _elm_lang$core$Native_Utils.update(
 		aft,
 		{
-			tree: A2(_user$project$Internal$leftPop, aft.monoid, aft.tree)
+			tree: A2(_MatthewJohnHeath$elm_fingertree$Internal$leftPop, aft.monoid, aft.tree)
 		});
 };
-var _user$project$Annotated$leftPeek = function (_p11) {
-	return _user$project$Internal$leftPeak(
+var _MatthewJohnHeath$elm_fingertree$Annotated$leftPeek = function (_p11) {
+	return _MatthewJohnHeath$elm_fingertree$Internal$leftPeak(
 		function (_) {
 			return _.tree;
 		}(_p11));
 };
-var _user$project$Annotated$reduce = function (aft) {
-	return A3(_user$project$Internal$reduce, aft.monoid, aft.projection, aft.tree);
+var _MatthewJohnHeath$elm_fingertree$Annotated$reduce = function (aft) {
+	return A3(_MatthewJohnHeath$elm_fingertree$Internal$reduce, aft.monoid, aft.projection, aft.tree);
 };
-var _user$project$Annotated$AnnotatedFingerTree = F3(
+var _MatthewJohnHeath$elm_fingertree$Annotated$AnnotatedFingerTree = F3(
 	function (a, b, c) {
 		return {monoid: a, projection: b, tree: c};
 	});
-var _user$project$Annotated$empty = F2(
+var _MatthewJohnHeath$elm_fingertree$Annotated$empty = F2(
 	function (monoid, projection) {
-		return A3(_user$project$Annotated$AnnotatedFingerTree, monoid, projection, _user$project$Internal$empty);
+		return A3(_MatthewJohnHeath$elm_fingertree$Annotated$AnnotatedFingerTree, monoid, projection, _MatthewJohnHeath$elm_fingertree$Internal$empty);
 	});
-var _user$project$Annotated$Split = F3(
+var _MatthewJohnHeath$elm_fingertree$Annotated$Split = F3(
 	function (a, b, c) {
 		return {left: a, middle: b, right: c};
 	});
-var _user$project$Container$insert = function (_p0) {
-	return _user$project$Annotated$insert(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-			})(_p0));
-};
-var _user$project$Container$remove = function (_p1) {
-	return _user$project$Annotated$remove(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-			})(_p1));
-};
-var _user$project$Container$set = function (_p2) {
-	return _user$project$Annotated$set(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-			})(_p2));
-};
-var _user$project$Container$get = function (_p3) {
-	return _user$project$Annotated$get(
-		F2(
-			function (x, y) {
-				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-			})(_p3));
-};
-var _user$project$Container$size = _user$project$Annotated$reduce;
-var _user$project$Container$slice = F3(
-	function (start, end, con) {
-		var length = _user$project$Container$size(con);
-		var index = function (n) {
-			index:
-			while (true) {
-				if (_elm_lang$core$Native_Utils.cmp(n, 0 - length) < 0) {
-					var _v0 = 0;
-					n = _v0;
-					continue index;
-				} else {
-					if (_elm_lang$core$Native_Utils.cmp(n, 0) < 0) {
-						var _v1 = length + n;
-						n = _v1;
-						continue index;
-					} else {
-						if (_elm_lang$core$Native_Utils.cmp(n, length) > -1) {
-							return length - 1;
-						} else {
-							return n;
-						}
-					}
-				}
-			}
-		};
-		return A2(
-			_user$project$Annotated$before,
-			function (_p4) {
-				return A2(
-					F2(
-						function (x, y) {
-							return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-						}),
-					end - start,
-					index(_p4));
-			},
-			A2(
-				_user$project$Annotated$from,
-				function (_p5) {
-					return A2(
-						F2(
-							function (x, y) {
-								return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
-							}),
-						start,
-						index(_p5));
-				},
-				con));
+var _MatthewJohnHeath$elm_fingertree$PriorityQueue$push = F2(
+	function (priority, value) {
+		return _MatthewJohnHeath$elm_fingertree$Annotated$leftPush(
+			_MatthewJohnHeath$elm_fingertree$Monoid$Normal(
+				{ctor: '_Tuple2', _0: value, _1: priority}));
 	});
-var _user$project$Container$peekBack = _user$project$Annotated$rightPeek;
-var _user$project$Container$popBack = _user$project$Annotated$rightPop;
-var _user$project$Container$pushBack = _user$project$Annotated$rightPush;
-var _user$project$Container$peekFront = _user$project$Annotated$leftPeek;
-var _user$project$Container$popFront = _user$project$Annotated$leftPop;
-var _user$project$Container$pushFront = _user$project$Annotated$leftPush;
-var _user$project$Container$empty = A2(
-	_user$project$Annotated$empty,
-	_user$project$Monoid$int,
-	_elm_lang$core$Basics$always(1));
-var _user$project$Container$fromList = A2(_elm_lang$core$List$foldl, _user$project$Container$pushBack, _user$project$Container$empty);
+var _MatthewJohnHeath$elm_fingertree$PriorityQueue$top = function (pq) {
+	var _p0 = _MatthewJohnHeath$elm_fingertree$Annotated$reduce(pq);
+	if (_p0.ctor === 'Zero') {
+		return _elm_lang$core$Maybe$Nothing;
+	} else {
+		return _elm_lang$core$Maybe$Just(_p0._0._0);
+	}
+};
+var _MatthewJohnHeath$elm_fingertree$PriorityQueue$topPriority = function (pq) {
+	var _p1 = _MatthewJohnHeath$elm_fingertree$Annotated$reduce(pq);
+	if (_p1.ctor === 'Zero') {
+		return _elm_lang$core$Maybe$Nothing;
+	} else {
+		return _elm_lang$core$Maybe$Just(_p1._0._1);
+	}
+};
+var _MatthewJohnHeath$elm_fingertree$PriorityQueue$pop = function (pq) {
+	var measure = function (waz) {
+		var _p2 = {
+			ctor: '_Tuple2',
+			_0: waz,
+			_1: _MatthewJohnHeath$elm_fingertree$PriorityQueue$topPriority(pq)
+		};
+		if ((((_p2.ctor === '_Tuple2') && (_p2._0.ctor === 'Normal')) && (_p2._0._0.ctor === '_Tuple2')) && (_p2._1.ctor === 'Just')) {
+			return _elm_lang$core$Native_Utils.cmp(_p2._0._0._1, _p2._1._0) > -1;
+		} else {
+			return false;
+		}
+	};
+	return A2(_MatthewJohnHeath$elm_fingertree$Annotated$remove, measure, pq);
+};
+var _MatthewJohnHeath$elm_fingertree$PriorityQueue$minBySnd = F2(
+	function (_p4, _p3) {
+		var _p5 = _p4;
+		var _p8 = _p5._1;
+		var _p6 = _p3;
+		var _p7 = _p6._1;
+		return (_elm_lang$core$Native_Utils.cmp(_p7, _p8) > 0) ? {ctor: '_Tuple2', _0: _p6._0, _1: _p7} : {ctor: '_Tuple2', _0: _p5._0, _1: _p8};
+	});
+var _MatthewJohnHeath$elm_fingertree$PriorityQueue$empty = A2(
+	_MatthewJohnHeath$elm_fingertree$Annotated$empty,
+	_MatthewJohnHeath$elm_fingertree$Monoid$appendZero(_MatthewJohnHeath$elm_fingertree$PriorityQueue$minBySnd),
+	_elm_lang$core$Basics$identity);
 var Elm = {};
-Elm['Container'] = Elm['Container'] || {};
-_elm_lang$core$Native_Platform.addPublicModule(Elm['Container'], 'Container', typeof _user$project$Container$main === 'undefined' ? null : _user$project$Container$main);
+Elm['PriorityQueue'] = Elm['PriorityQueue'] || {};
+_elm_lang$core$Native_Platform.addPublicModule(Elm['PriorityQueue'], 'PriorityQueue', typeof _MatthewJohnHeath$elm_fingertree$PriorityQueue$main === 'undefined' ? null : _MatthewJohnHeath$elm_fingertree$PriorityQueue$main);
 
 if (typeof define === "function" && define['amd'])
 {
@@ -3745,4 +3705,4 @@ for (var publicModule in Elm)
 }
 
 }).call(this);
-</script></head><body><script type="text/javascript">Elm.Container.fullscreen()</script></body></html>
+</script></head><body><script type="text/javascript">Elm.PriorityQueue.fullscreen()</script></body></html>
