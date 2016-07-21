@@ -31,7 +31,7 @@ type alias AnnotatedFingerTree a b
   tree : InternalFingerTree a b}
 {-| Empty finger tree specifiying monoid and projection-}
 empty:Monoid b  -> (a -> b) -> AnnotatedFingerTree a b
-empty monoid  projection = AnnotatedFingerTree monoid projection Internal.empty
+empty monoid projection = AnnotatedFingerTree monoid projection Internal.empty
 {-|reduce-}
 reduce: AnnotatedFingerTree a b -> b
 reduce aft = Internal.reduce aft.monoid aft.projection aft.tree
@@ -73,7 +73,8 @@ type alias Split a b =
 annotate: AnnotatedFingerTree a b -> Internal.Split a b -> Split a b
 annotate aft asplit =
   {left = {aft|tree=asplit.left}, middle = asplit.middle, right = {aft|tree=asplit.right}}
-{-|split-}
+{-|Let & be the monoid operation
+  split measure aft returns the split at the leftmost "middle" such that ( (reduce split left ) & split.middle ) |> measure = true-}
 split: (b -> Bool) -> AnnotatedFingerTree a b -> Maybe(Split a b)
 split measure aft=
      aft.tree

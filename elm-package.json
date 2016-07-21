@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "summary": "A fingertree for elm ",
     "repository": "https://github.com/MatthewJohnHeath/elm-fingertree.git",
     "license": "BSD3",
@@ -8,6 +8,7 @@
         "src"
     ],
     "exposed-modules": [
+        "Monoid"
         "Annotated",
         "Container",
         "PriorityQueue"

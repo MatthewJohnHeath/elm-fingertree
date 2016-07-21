@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html><head><meta charset="UTF-8"><title>PriorityQueue</title><style>html,head,body { padding:0; margin:0; }
+<html><head><meta charset="UTF-8"><title>Container</title><style>html,head,body { padding:0; margin:0; }
 body { font-family: calibri, helvetica, arial, sans-serif; }</style><script type="text/javascript">
 (function() {
 'use strict';
@@ -2525,10 +2525,6 @@ var _MatthewJohnHeath$elm_fingertree$Monoid$int = {
 			return x + y;
 		})
 };
-var _MatthewJohnHeath$elm_fingertree$Monoid$apply = F3(
-	function (mon, a1, a2) {
-		return A2(mon.op, a1, a2);
-	});
 var _MatthewJohnHeath$elm_fingertree$Monoid$Monoid = F2(
 	function (a, b) {
 		return {zero: a, op: b};
@@ -3623,58 +3619,98 @@ var _MatthewJohnHeath$elm_fingertree$Annotated$Split = F3(
 	function (a, b, c) {
 		return {left: a, middle: b, right: c};
 	});
-var _MatthewJohnHeath$elm_fingertree$PriorityQueue$push = F2(
-	function (priority, value) {
-		return _MatthewJohnHeath$elm_fingertree$Annotated$leftPush(
-			_MatthewJohnHeath$elm_fingertree$Monoid$Normal(
-				{ctor: '_Tuple2', _0: value, _1: priority}));
-	});
-var _MatthewJohnHeath$elm_fingertree$PriorityQueue$top = function (pq) {
-	var _p0 = _MatthewJohnHeath$elm_fingertree$Annotated$reduce(pq);
-	if (_p0.ctor === 'Zero') {
-		return _elm_lang$core$Maybe$Nothing;
-	} else {
-		return _elm_lang$core$Maybe$Just(_p0._0._0);
-	}
+var _MatthewJohnHeath$elm_fingertree$Container$insert = function (_p0) {
+	return _MatthewJohnHeath$elm_fingertree$Annotated$insert(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p0));
 };
-var _MatthewJohnHeath$elm_fingertree$PriorityQueue$topPriority = function (pq) {
-	var _p1 = _MatthewJohnHeath$elm_fingertree$Annotated$reduce(pq);
-	if (_p1.ctor === 'Zero') {
-		return _elm_lang$core$Maybe$Nothing;
-	} else {
-		return _elm_lang$core$Maybe$Just(_p1._0._1);
-	}
+var _MatthewJohnHeath$elm_fingertree$Container$remove = function (_p1) {
+	return _MatthewJohnHeath$elm_fingertree$Annotated$remove(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p1));
 };
-var _MatthewJohnHeath$elm_fingertree$PriorityQueue$pop = function (pq) {
-	var measure = function (waz) {
-		var _p2 = {
-			ctor: '_Tuple2',
-			_0: waz,
-			_1: _MatthewJohnHeath$elm_fingertree$PriorityQueue$topPriority(pq)
+var _MatthewJohnHeath$elm_fingertree$Container$set = function (_p2) {
+	return _MatthewJohnHeath$elm_fingertree$Annotated$set(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p2));
+};
+var _MatthewJohnHeath$elm_fingertree$Container$get = function (_p3) {
+	return _MatthewJohnHeath$elm_fingertree$Annotated$get(
+		F2(
+			function (x, y) {
+				return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+			})(_p3));
+};
+var _MatthewJohnHeath$elm_fingertree$Container$size = _MatthewJohnHeath$elm_fingertree$Annotated$reduce;
+var _MatthewJohnHeath$elm_fingertree$Container$slice = F3(
+	function (start, end, con) {
+		var length = _MatthewJohnHeath$elm_fingertree$Container$size(con);
+		var index = function (n) {
+			index:
+			while (true) {
+				if (_elm_lang$core$Native_Utils.cmp(n, 0 - length) < 0) {
+					var _v0 = 0;
+					n = _v0;
+					continue index;
+				} else {
+					if (_elm_lang$core$Native_Utils.cmp(n, 0) < 0) {
+						var _v1 = length + n;
+						n = _v1;
+						continue index;
+					} else {
+						if (_elm_lang$core$Native_Utils.cmp(n, length) > -1) {
+							return length - 1;
+						} else {
+							return n;
+						}
+					}
+				}
+			}
 		};
-		if ((((_p2.ctor === '_Tuple2') && (_p2._0.ctor === 'Normal')) && (_p2._0._0.ctor === '_Tuple2')) && (_p2._1.ctor === 'Just')) {
-			return _elm_lang$core$Native_Utils.cmp(_p2._0._0._1, _p2._1._0) > -1;
-		} else {
-			return false;
-		}
-	};
-	return A2(_MatthewJohnHeath$elm_fingertree$Annotated$remove, measure, pq);
-};
-var _MatthewJohnHeath$elm_fingertree$PriorityQueue$minBySnd = F2(
-	function (_p4, _p3) {
-		var _p5 = _p4;
-		var _p8 = _p5._1;
-		var _p6 = _p3;
-		var _p7 = _p6._1;
-		return (_elm_lang$core$Native_Utils.cmp(_p7, _p8) > 0) ? {ctor: '_Tuple2', _0: _p6._0, _1: _p7} : {ctor: '_Tuple2', _0: _p5._0, _1: _p8};
+		return A2(
+			_MatthewJohnHeath$elm_fingertree$Annotated$before,
+			function (_p4) {
+				return A2(
+					F2(
+						function (x, y) {
+							return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+						}),
+					end - start,
+					index(_p4));
+			},
+			A2(
+				_MatthewJohnHeath$elm_fingertree$Annotated$from,
+				function (_p5) {
+					return A2(
+						F2(
+							function (x, y) {
+								return _elm_lang$core$Native_Utils.cmp(x, y) < 0;
+							}),
+						start,
+						index(_p5));
+				},
+				con));
 	});
-var _MatthewJohnHeath$elm_fingertree$PriorityQueue$empty = A2(
+var _MatthewJohnHeath$elm_fingertree$Container$peekBack = _MatthewJohnHeath$elm_fingertree$Annotated$rightPeek;
+var _MatthewJohnHeath$elm_fingertree$Container$popBack = _MatthewJohnHeath$elm_fingertree$Annotated$rightPop;
+var _MatthewJohnHeath$elm_fingertree$Container$pushBack = _MatthewJohnHeath$elm_fingertree$Annotated$rightPush;
+var _MatthewJohnHeath$elm_fingertree$Container$peekFront = _MatthewJohnHeath$elm_fingertree$Annotated$leftPeek;
+var _MatthewJohnHeath$elm_fingertree$Container$popFront = _MatthewJohnHeath$elm_fingertree$Annotated$leftPop;
+var _MatthewJohnHeath$elm_fingertree$Container$pushFront = _MatthewJohnHeath$elm_fingertree$Annotated$leftPush;
+var _MatthewJohnHeath$elm_fingertree$Container$empty = A2(
 	_MatthewJohnHeath$elm_fingertree$Annotated$empty,
-	_MatthewJohnHeath$elm_fingertree$Monoid$appendZero(_MatthewJohnHeath$elm_fingertree$PriorityQueue$minBySnd),
-	_elm_lang$core$Basics$identity);
+	_MatthewJohnHeath$elm_fingertree$Monoid$int,
+	_elm_lang$core$Basics$always(1));
+var _MatthewJohnHeath$elm_fingertree$Container$fromList = A2(_elm_lang$core$List$foldl, _MatthewJohnHeath$elm_fingertree$Container$pushBack, _MatthewJohnHeath$elm_fingertree$Container$empty);
 var Elm = {};
-Elm['PriorityQueue'] = Elm['PriorityQueue'] || {};
-_elm_lang$core$Native_Platform.addPublicModule(Elm['PriorityQueue'], 'PriorityQueue', typeof _MatthewJohnHeath$elm_fingertree$PriorityQueue$main === 'undefined' ? null : _MatthewJohnHeath$elm_fingertree$PriorityQueue$main);
+Elm['Container'] = Elm['Container'] || {};
+_elm_lang$core$Native_Platform.addPublicModule(Elm['Container'], 'Container', typeof _MatthewJohnHeath$elm_fingertree$Container$main === 'undefined' ? null : _MatthewJohnHeath$elm_fingertree$Container$main);
 
 if (typeof define === "function" && define['amd'])
 {
@@ -3705,4 +3741,4 @@ for (var publicModule in Elm)
 }
 
 }).call(this);
-</script></head><body><script type="text/javascript">Elm.PriorityQueue.fullscreen()</script></body></html>
+</script></head><body><script type="text/javascript">Elm.Container.fullscreen()</script></body></html>
