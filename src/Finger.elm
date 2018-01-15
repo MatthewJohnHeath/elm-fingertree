@@ -68,18 +68,18 @@ rightRemove finger=
 leftPeak:Finger a->a
 leftPeak finger =
   case finger of
-  One a'->a'
-  Two a' _ ->a'
-  Three a' _ _-> a'
-  Four a' _ _ _ -> a'
+  One a_->a_
+  Two a_ _ ->a_
+  Three a_ _ _-> a_
+  Four a_ _ _ _ -> a_
 
 rightPeak:Finger a -> a
 rightPeak finger =
     case finger of
-    One a'->a'
-    Two _ a'  ->a'
-    Three  _ _ a'-> a'
-    Four _ _ _  a'-> a'
+    One a_->a_
+    Two _ a_  ->a_
+    Three  _ _ a_-> a_
+    Four _ _ _  a_-> a_
 
 tryFromList: List a -> Maybe (Finger a)
 tryFromList list =

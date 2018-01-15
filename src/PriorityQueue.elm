@@ -14,7 +14,7 @@ type alias PriorityQueue a comparable=
   AnnotatedFingerTree (Monoid.WithAppendedZero (a,comparable)) (Monoid.WithAppendedZero (a,comparable))
 
 minBySnd: (a,comparable) -> (a,comparable) -> (a,comparable)
-minBySnd (a,c) (a',c')= if c'>c then (a',c') else (a,c)
+minBySnd (a,c) (a_,c_)= if c_>c then (a_,c_) else (a,c)
 {-| returns an empty priority queue-}
 empty: PriorityQueue a comparable
 empty = Annotated.empty (Monoid.appendZero minBySnd) identity
