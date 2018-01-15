@@ -17,7 +17,7 @@ appendZero op =
     case (a1,a2) of
     (Zero,  a) -> a
     (a, Zero) -> a
-    (Normal a, Normal a') -> Normal(op a a')
+    (Normal a, Normal a_) -> Normal(op a a_)
   in
   {zero = Zero , op = newOp}
 

@@ -4,6 +4,7 @@ import Finger exposing(Finger, Finger(One))
 import Node exposing (Node, Node(..))
 import Monoid exposing (Monoid)
 import Maybe
+import Tuple exposing (second)
 
 type InternalFingerTree a b
   =Empty
@@ -46,8 +47,8 @@ leftPush  monoid projection a0 fingerTree=
       let node = Node.Node3 a2 a3 a4 in
       let nodeAnnotation =
         Node.reduce (monoid.op << projection) zero node in
-      let midTree = leftPush monoid snd (node, nodeAnnotation) middle in
-      let midAnnotation = reduce monoid snd midTree in
+      let midTree = leftPush monoid second (node, nodeAnnotation) middle in
+      let midAnnotation = reduce monoid second midTree in
       Deep (Finger.Two a0 a1) midTree midAnnotation right
     Deep left middle annotation right ->
       Deep (Finger.leftAdd a0 left) middle annotation right
@@ -68,7 +69,7 @@ leftPop mon fingerTree =
       case leftPeak mid of
       Just (node,_) ->
         let newMid = leftPop mon mid in
-        Deep (Node.toFinger node) newMid (reduce mon snd newMid) right
+        Deep (Node.toFinger node) newMid (reduce mon second newMid) right
       Nothing -> ofFinger mon.zero right
     Deep left mid annotation right ->
       Deep (Finger.leftRemove left) mid annotation right
@@ -84,8 +85,8 @@ rightPush  monoid projection a0 fingerTree=
       let node = Node.Node3 a4 a3 a2 in
       let nodeAnnotation =
         Node.reduce (monoid.op << projection) zero node in
-      let midTree = rightPush monoid snd (node, nodeAnnotation) middle in
-      let midAnnotation = reduce monoid snd midTree in
+      let midTree = rightPush monoid second (node, nodeAnnotation) middle in
+      let midAnnotation = reduce monoid second midTree in
       Deep left midTree midAnnotation (Finger.Two a1 a0)
     Deep left middle annotation right ->
       Deep left middle annotation (Finger.rightAdd a0 right)
@@ -106,7 +107,7 @@ rightPop mon fingerTree =
       case rightPeak mid of
       Just (node,_) ->
         let newMid = rightPop mon mid in
-        Deep left newMid (reduce mon snd newMid) (Node.toFinger node)
+        Deep left newMid (reduce mon second newMid) (Node.toFinger node)
       Nothing -> ofFinger mon.zero left
     Deep left mid annotation right ->
       Deep left mid annotation (Finger.rightRemove right)
@@ -150,8 +151,8 @@ concatWithMiddle monoid projection left middle right =
           |> nodify
           |> List.map annotate
         in
-        let newMidTree = concatWithMiddle monoid snd lmid newMidList rmid in
-        Deep lleft newMidTree (reduce monoid snd newMidTree) rright
+        let newMidTree = concatWithMiddle monoid second lmid newMidList rmid in
+        Deep lleft newMidTree (reduce monoid second newMidTree) rright
   in
   loop left middle right
 
@@ -167,7 +168,7 @@ deepLeft mon left mid annotation right =
         case rightPeak mid of
           Just(newright,_)->
             let newmid = rightPop mon mid in
-            Deep left newmid (reduce mon snd newmid) (Node.toFinger newright)
+            Deep left newmid (reduce mon second newmid) (Node.toFinger newright)
           Nothing -> ofFinger mon.zero left
 
 deepRight:Monoid b  -> List a ->  InternalFingerTree (Node a, b) b -> b -> Finger a -> InternalFingerTree a b
@@ -178,7 +179,7 @@ deepRight mon left mid annotation right =
         case leftPeak mid of
           Just(newleft,_)->
             let newmid = leftPop mon mid in
-            Deep (Node.toFinger newleft) newmid (reduce mon snd newmid) right
+            Deep (Node.toFinger newleft) newmid (reduce mon second newmid) right
           Nothing -> ofFinger mon.zero right
 
 type alias Split a b =
@@ -191,7 +192,7 @@ type alias Split a b =
 split : Monoid(b) -> (a -> b) -> (b -> Bool) -> b ->  InternalFingerTree a b ->  Maybe (Split a b)
 split monoid projection measurement start tree =
   let folder a b = monoid.op b (projection a) in
-  let red = reduce monoid snd in
+  let red = reduce monoid second in
   let deepL = deepLeft monoid in
   let deepR = deepRight monoid in
   let fromList = ofList monoid projection in
@@ -209,7 +210,7 @@ split monoid projection measurement start tree =
               right = deepR leftsplit.right mid annotation rightfinger}
           Nothing ->
             let leftReduced = Finger.reduce folder start leftfinger in
-            case split monoid snd measurement leftReduced mid of
+            case split monoid second measurement leftReduced mid of
               Just midsplit ->
                 let (node, _) = midsplit.middle in
                 let upToNode = monoid.op leftReduced (red midsplit.left) in
